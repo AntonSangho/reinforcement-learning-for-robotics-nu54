@@ -6,7 +6,7 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 ## 지금 상태
 
 - 현재 Part: **0 (저장소·개발 환경 세팅)**
-- 다음 할 일: Docker 이미지 빌드·스모크 테스트 → Part 1 시작
+- 다음 할 일: Docker 이미지 빌드·스모크 테스트 → Part 1 시작, HW 브링업(#9)은 나란히
 
 ## 결정 사항
 
@@ -18,6 +18,8 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 | 2026-10-04 | 원본 폴더(`workspace/software`, `workspace/mechanical`, `Dockerfile.*`)는 수정하지 않음 | `upstream` 업데이트를 merge하기 쉽게 |
 | 2026-10-04 | 블로그는 외부 블로그에 게시, 저장소에는 `blog/drafts/` 초안 | 팀원은 저장소에서 바로 읽고, 게시본 URL은 README에 링크 |
 | 2026-10-04 | Part 6 원격 조종은 BLE + Web Bluetooth | nRF54L15에는 WiFi가 없음 |
+| 2026-10-04 | 하드웨어 브링업을 Issue #9로 분리, Part 1~2와 나란히 진행 | 강화학습 결과와 무관해서 병렬 가능, Part 2.5 측정값도 여기서 나옴 (회고 1 §4-1) |
+| 2026-10-04 | 커밋 메시지에 `Co-Authored-By: Claude` 서명을 넣음 | nu54v-dk와 달리 이 저장소는 서명 유지 |
 
 ## 기록
 
@@ -27,5 +29,11 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 - README 한국어 섹션·진행표, `docs/`, `blog/drafts/`, Issue 템플릿 추가
 - 원본 하드웨어 분석: Bala2 Fire는 IMU가 Fire 코어(MPU6886)에, 모터·엔코더는 베이스의 STM32(I2C 0x3A)에 있음 → NU54-DK에서는 IMU, 모터 드라이버, 엔코더 입력을 모두 새로 구성해야 함
 - `rl/onnx_actor_to_c.py`가 만드는 `actor.h`는 순수 C(`tanhf`만 사용)라서 Zephyr에서 그대로 쓸 수 있음
+
+- README를 프로젝트 중심의 한국어 README로 다시 씀 (원본 튜토리얼 내용 제거, 출처·라이선스만 남김)
+- BOM 기록: MPU-6050, TB6612FNG(칩 확인), JGA25-370 + 홀 엔코더 11 PPR, 바퀴 80 mm, 3S 18650, 5 V 벅 → [hardware.md](hardware.md)
+- 남은 것: Docker 데몬이 꺼져 있어 이미지 빌드·스모크 테스트 못 함 (sudo 필요)
+- 하드웨어 브링업을 Issue #9로 분리하고 Part 3(#5)에서 해당 항목을 뺌
+- 회고: [retros/2026-10-04_session01_setup.md](retros/2026-10-04_session01_setup.md), 프로젝트 `CLAUDE.md` 추가
 
 <!-- 새 기록은 이 아래에 추가 -->

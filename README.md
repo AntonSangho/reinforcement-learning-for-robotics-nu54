@@ -26,6 +26,7 @@ MuJoCo 시뮬레이터에서 **강화학습(PPO)으로 학습한 정책**을 실
 | 0 | 저장소·개발 환경 세팅 | 🟡 | [#1](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/1) | — |
 | 1 | CAD → MuJoCo 시뮬레이터 | ⬜ | [#2](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/2) | [초안](blog/drafts/part1-cad-to-mujoco.md) |
 | 2 | PPO로 균형 잡기 학습 | ⬜ | [#3](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/3) | [초안](blog/drafts/part2-train-with-ppo.md) |
+| HW | 하드웨어 브링업: 배선, IMU·모터·엔코더 시험, 실측 (1~2단계와 나란히) | ⬜ | [#9](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/9) | — |
 | 2.5 | 내 섀시 모델링(CAD → MJCF)과 재학습 | ⬜ | [#4](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/4) | (2편 또는 3편에 포함) |
 | 3 | Sim → Real: NU54-DK에 정책 배포 | ⬜ | [#5](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/5) | [초안](blog/drafts/part3-sim-to-real.md) |
 | 4 | Domain Randomization | ⬜ | [#6](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/6) | [초안](blog/drafts/part4-domain-randomization.md) |
@@ -41,7 +42,7 @@ MuJoCo 시뮬레이터에서 **강화학습(PPO)으로 학습한 정책**을 실
         ↓
 [2] Gymnasium 환경 + PPO 학습 (원본 Bala2 모델로 개념 익히기)
         ↓
-[2.5] 내 섀시를 측정·모델링해서 다시 학습
+[2.5] 내 섀시를 모델링해서 다시 학습   ← [HW] 배선·IMU·모터·엔코더 시험·실측 (1~2단계와 나란히)
         ↓
 [3] 정책(actor)을 C 헤더로 변환 → NU54-DK에서 5 ms 주기로 추론·모터 제어
         ↓
@@ -92,7 +93,7 @@ docker run -it --rm -p 3000:3000 -p 6006:6006 -v "${PWD}/workspace:/workspace" -
 | 폴더 | 내용 |
 |---|---|
 | `workspace/nu54/` | 내 섀시 모델과 학습 코드 (2.5단계부터) |
-| `firmware/` | NU54-DK Zephyr 펌웨어 (3단계부터) |
+| `firmware/` | NU54-DK Zephyr 펌웨어 (HW 브링업부터) |
 | `workspace/software/`, `workspace/mechanical/` | 참고용 원본 튜토리얼 코드와 Bala2 모델 (수정하지 않음) |
 | `docs/` | 진행 기록, 환경 세팅, 하드웨어, 강화학습 학습 노트 |
 | `blog/drafts/` | 블로그 초안 |
