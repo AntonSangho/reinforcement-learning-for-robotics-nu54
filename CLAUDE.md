@@ -15,6 +15,8 @@ Shawn Hymel의 RL for Robotics 튜토리얼(Part 1~6)을 NU54-DK(nRF54L15)와 �
 
 ## 세션 끝
 
+사용자가 중간에 끝내도 1~5는 한다 (세션 1 뒤 기록 누락 사례). 마지막에 다음 세션 시작 방법을 알려 준다.
+
 1. Issue 체크리스트 갱신 (`gh issue edit` / 완료 시 close)
 2. README 진행표 상태 (⬜ 🟡 ✅)
 3. `docs/00_progress.md`에 날짜별 기록 추가
@@ -28,7 +30,9 @@ Shawn Hymel의 RL for Robotics 튜토리얼(Part 1~6)을 NU54-DK(nRF54L15)와 �
 - 내 섀시 모델·학습 코드: `workspace/nu54/` · 펌웨어: `firmware/` (HW 브링업 #9부터)
 - 이미지: `docs/images/`, 영어 소문자·하이픈/밑줄 이름
 - 블로그 초안: `blog/drafts/partN-*.md` (외부 블로그에 게시 후 front matter `published_url`과 README에 링크)
-- 학습 노트 `docs/rl-notes.md`: **답을 대신 써 넣지 않는다.** 질문, 힌트, 실험 제안까지만 한다
+- 학습 노트 `docs/rl-notes.md`: **답을 대신 써 넣지 않는다.** 질문, 힌트, 실험 제안까지만 한다. 사용자 답에 대한 힌트는 회고의 다음 세션 체크리스트에 적는다
+- 값을 바꾸는 실험은 `docs/experiments.md`에 예측(실행 전) → 결과 → 해석. 노트북은 `workspace/nu54/0N-*/`에 복사해서 고친다
+- 진행 단계를 안내할 때는 단계 이름 + 파일 경로 + 할 일을 함께 쓴다
 - 모든 문서와 대화는 한국어. 코드 주석은 주변 코드 관례를 따른다
 
 ## 하드웨어 요약 (자세히: docs/hardware.md)

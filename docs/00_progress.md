@@ -6,7 +6,7 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 ## 지금 상태
 
 - 현재 Part: **1 (CAD → MuJoCo 시뮬레이터)**, Issue #2
-- 다음 할 일: Part 1 체크리스트 진행, HW 브링업(#9)은 나란히
+- 다음 할 일: Part 1 PID 외란 테스트와 실험 A~E ([experiments.md](experiments.md)), `rl-notes.md` 남은 질문 → Issue #2 닫기. HW 브링업(#9)은 나란히
 
 ## 결정 사항
 
@@ -21,6 +21,7 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 | 2026-10-04 | 하드웨어 브링업을 Issue #9로 분리, Part 1~2와 나란히 진행 | 강화학습 결과와 무관해서 병렬 가능, Part 2.5 측정값도 여기서 나옴 (회고 1 §4-1) |
 | 2026-10-04 | 커밋 메시지에 `Co-Authored-By: Claude` 서명을 넣음 | nu54v-dk와 달리 이 저장소는 서명 유지 |
 | 2026-10-05 | 컨테이너는 `-d --rm --name rl-robotics -e PUID/PGID`로 실행 | 터미널을 차지하지 않고, Jupyter에서 `workspace/` 저장이 됨 |
+| 2026-10-05 | 값을 바꾸는 실험은 `docs/experiments.md`에 예측 → 결과 → 해석으로 기록 | 개념 답(`rl-notes.md`)과 실험 기록을 분리 |
 
 ## 기록
 
@@ -37,14 +38,20 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 - 하드웨어 브링업을 Issue #9로 분리하고 Part 3(#5)에서 해당 항목을 뺌
 - 회고: [retros/2026-10-04_session01_setup.md](retros/2026-10-04_session01_setup.md), 프로젝트 `CLAUDE.md` 추가
 
-### 2026-10-04 — Docker 빌드, FreeCAD 교체 (기록 누락분)
+### 2026-10-04 — Docker 빌드, FreeCAD 교체, Part 1 요약 (기록 누락분)
 
 - Docker 이미지 빌드 약 21분, 19.4 GB. 스모크 테스트 통과 (mujoco 3.7.0, torch 2.11.0+cpu, gymnasium 1.2.3, onnx 1.21.0)
 - 원본 FCStd가 FreeCAD 1.1로 저장되어 있어 apt의 0.19 대신 1.1.4 AppImage 사용 → [setup.md](setup.md) §2
+- `workspace/nu54/FreeCAD/scripts/mesh_export.py`: 원본 복사본, 출력 기본 위치를 `workspace/nu54/`로 바꾸고 원본 폴더에 쓰기를 막음
+- Part 1 원문 요약 [summaries/part1-cad-to-mujoco.md](summaries/part1-cad-to-mujoco.md)
 
-### 2026-10-05 — Part 0 완료
+### 2026-10-05 — Part 0 완료, Part 1 시작
 
 - 컨테이너를 백그라운드로 실행 (`docker run -d --name rl-robotics ...`), WebTop·TensorBoard 접속 확인 → Issue #1 닫음
 - 컨테이너 권한 문제 해결: PUID 없이 띄우면 uid 911이라 `workspace/`에 저장 불가 → `-e PUID=$(id -u) -e PGID=$(id -g)`. `software/runs`(root 소유)는 chown. 실행 명령을 README·CLAUDE.md·setup.md에 반영
+- Part 1: `test_motion.ipynb` 수동 조종, `rl-notes.md` Part 1 질문에 첫 답 작성
+- PID 노트북을 `workspace/nu54/01-test-model-in-mujoco/`에 복사해 실행, 기본 게인(KP 7, KD 0.5)으로 서 있음 확인
+- 실험 기록 문서 [experiments.md](experiments.md) 추가 (예측 → 결과 → 해석)
+- 회고: [retros/2026-10-05_session02_part1-mujoco.md](retros/2026-10-05_session02_part1-mujoco.md)
 
 <!-- 새 기록은 이 아래에 추가 -->

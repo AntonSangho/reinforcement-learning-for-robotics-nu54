@@ -24,7 +24,7 @@ MuJoCo 시뮬레이터에서 **강화학습(PPO)으로 학습한 정책**을 실
 | 단계 | 내용 | 상태 | Issue | 블로그 |
 |---|---|---|---|---|
 | 0 | 저장소·개발 환경 세팅 | ✅ | [#1](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/1) | — |
-| 1 | CAD → MuJoCo 시뮬레이터 | ⬜ | [#2](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/2) | [초안](blog/drafts/part1-cad-to-mujoco.md) |
+| 1 | CAD → MuJoCo 시뮬레이터 | 🟡 | [#2](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/2) | [초안](blog/drafts/part1-cad-to-mujoco.md) |
 | 2 | PPO로 균형 잡기 학습 | ⬜ | [#3](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/3) | [초안](blog/drafts/part2-train-with-ppo.md) |
 | HW | 하드웨어 브링업: 배선, IMU·모터·엔코더 시험, 실측 (1~2단계와 나란히) | ⬜ | [#9](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/9) | — |
 | 2.5 | 내 섀시 모델링(CAD → MJCF)과 재학습 | ⬜ | [#4](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/4) | (2편 또는 3편에 포함) |
@@ -108,6 +108,8 @@ docker stop rl-robotics   # 끝낼 때 (--rm이라 컨테이너도 지워짐)
 | [docs/setup.md](docs/setup.md) | 학습·펌웨어 개발 환경 세팅 |
 | [docs/hardware.md](docs/hardware.md) | 부품, 측정값, 배선, 시뮬레이션과 실제의 일치 체크리스트 |
 | [docs/rl-notes.md](docs/rl-notes.md) | 단계별로 스스로 답하는 강화학습 질문과 용어집 |
+| [docs/experiments.md](docs/experiments.md) | 값을 바꿔 돌려 본 실험: 예측, 결과, 해석 |
+| [docs/summaries/](docs/summaries/) | Part별 원문 요약, 저장소 실제 값, 내 섀시와 다른 점 |
 
 ## 참고 자료와 라이선스
 
