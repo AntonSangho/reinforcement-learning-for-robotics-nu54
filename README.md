@@ -23,7 +23,7 @@ MuJoCo 시뮬레이터에서 **강화학습(PPO)으로 학습한 정책**을 실
 
 | 단계 | 내용 | 상태 | Issue | 블로그 |
 |---|---|---|---|---|
-| 0 | 저장소·개발 환경 세팅 | 🟡 | [#1](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/1) | — |
+| 0 | 저장소·개발 환경 세팅 | ✅ | [#1](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/1) | — |
 | 1 | CAD → MuJoCo 시뮬레이터 | ⬜ | [#2](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/2) | [초안](blog/drafts/part1-cad-to-mujoco.md) |
 | 2 | PPO로 균형 잡기 학습 | ⬜ | [#3](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/3) | [초안](blog/drafts/part2-train-with-ppo.md) |
 | HW | 하드웨어 브링업: 배선, IMU·모터·엔코더 시험, 실측 (1~2단계와 나란히) | ⬜ | [#9](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/9) | — |
@@ -80,7 +80,9 @@ MuJoCo 시뮬레이터에서 **강화학습(PPO)으로 학습한 정책**을 실
 
 ```sh
 docker build -t rl-robotics -f Dockerfile.cpu .
-docker run -it --rm -p 3000:3000 -p 6006:6006 -v "${PWD}/workspace:/workspace" --shm-size=2g rl-robotics
+docker run -d --rm --name rl-robotics -e PUID=$(id -u) -e PGID=$(id -g) \
+  -p 3000:3000 -p 6006:6006 -v "${PWD}/workspace:/workspace" --shm-size=2g rl-robotics
+docker stop rl-robotics   # 끝낼 때 (--rm이라 컨테이너도 지워짐)
 ```
 
 - <http://localhost:3000> — 브라우저 데스크톱 (JupyterLab, VS Code, 터미널)

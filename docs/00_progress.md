@@ -5,8 +5,8 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 
 ## 지금 상태
 
-- 현재 Part: **0 (저장소·개발 환경 세팅)**
-- 다음 할 일: Docker 이미지 빌드·스모크 테스트 → Part 1 시작, HW 브링업(#9)은 나란히
+- 현재 Part: **1 (CAD → MuJoCo 시뮬레이터)**, Issue #2
+- 다음 할 일: Part 1 체크리스트 진행, HW 브링업(#9)은 나란히
 
 ## 결정 사항
 
@@ -20,6 +20,7 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 | 2026-10-04 | Part 6 원격 조종은 BLE + Web Bluetooth | nRF54L15에는 WiFi가 없음 |
 | 2026-10-04 | 하드웨어 브링업을 Issue #9로 분리, Part 1~2와 나란히 진행 | 강화학습 결과와 무관해서 병렬 가능, Part 2.5 측정값도 여기서 나옴 (회고 1 §4-1) |
 | 2026-10-04 | 커밋 메시지에 `Co-Authored-By: Claude` 서명을 넣음 | nu54v-dk와 달리 이 저장소는 서명 유지 |
+| 2026-10-05 | 컨테이너는 `-d --rm --name rl-robotics -e PUID/PGID`로 실행 | 터미널을 차지하지 않고, Jupyter에서 `workspace/` 저장이 됨 |
 
 ## 기록
 
@@ -35,5 +36,15 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 - 남은 것: Docker 데몬이 꺼져 있어 이미지 빌드·스모크 테스트 못 함 (sudo 필요)
 - 하드웨어 브링업을 Issue #9로 분리하고 Part 3(#5)에서 해당 항목을 뺌
 - 회고: [retros/2026-10-04_session01_setup.md](retros/2026-10-04_session01_setup.md), 프로젝트 `CLAUDE.md` 추가
+
+### 2026-10-04 — Docker 빌드, FreeCAD 교체 (기록 누락분)
+
+- Docker 이미지 빌드 약 21분, 19.4 GB. 스모크 테스트 통과 (mujoco 3.7.0, torch 2.11.0+cpu, gymnasium 1.2.3, onnx 1.21.0)
+- 원본 FCStd가 FreeCAD 1.1로 저장되어 있어 apt의 0.19 대신 1.1.4 AppImage 사용 → [setup.md](setup.md) §2
+
+### 2026-10-05 — Part 0 완료
+
+- 컨테이너를 백그라운드로 실행 (`docker run -d --name rl-robotics ...`), WebTop·TensorBoard 접속 확인 → Issue #1 닫음
+- 컨테이너 권한 문제 해결: PUID 없이 띄우면 uid 911이라 `workspace/`에 저장 불가 → `-e PUID=$(id -u) -e PGID=$(id -g)`. `software/runs`(root 소유)는 chown. 실행 명령을 README·CLAUDE.md·setup.md에 반영
 
 <!-- 새 기록은 이 아래에 추가 -->

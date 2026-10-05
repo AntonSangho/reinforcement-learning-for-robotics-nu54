@@ -9,7 +9,7 @@ Shawn Hymel의 RL for Robotics 튜토리얼(Part 1~6)을 NU54-DK(nRF54L15)와 �
 2. 이번 세션의 GitHub Issue 하나를 정한다 (`gh issue list`). 한 세션에 Issue 하나가 원칙.
    시뮬레이션(#2~#4)과 HW 브링업(#9)은 서로 의존하지 않으므로 번갈아 진행할 수 있다
 3. 사전 조건을 점검한다
-   - 학습: `docker info` (꺼져 있으면 사용자에게 `! sudo systemctl start docker` 요청)
+   - 학습: `docker info` (꺼져 있으면 사용자에게 `! sudo systemctl start docker` 요청), 컨테이너는 아래 "명령"의 `docker run`으로 띄운다 (PUID 없이 띄우면 Jupyter에서 `workspace/` 저장 불가)
    - 펌웨어: `~/ncs` v3.4.1, 보드 연결(`baram-ctl list`)
 4. 최근 회고(`docs/retros/`)의 "다음 세션 체크리스트"를 확인한다
 
@@ -51,6 +51,8 @@ Shawn Hymel의 RL for Robotics 튜토리얼(Part 1~6)을 NU54-DK(nRF54L15)와 �
 
 ```sh
 docker build -t rl-robotics -f Dockerfile.cpu .
-docker run -it --rm -p 3000:3000 -p 6006:6006 -v "${PWD}/workspace:/workspace" --shm-size=2g rl-robotics
+docker run -d --rm --name rl-robotics -e PUID=$(id -u) -e PGID=$(id -g) \
+  -p 3000:3000 -p 6006:6006 -v "${PWD}/workspace:/workspace" --shm-size=2g rl-robotics
+docker stop rl-robotics   # 끝낼 때 (--rm이라 컨테이너도 지워짐)
 # WebTop http://localhost:3000 · TensorBoard http://localhost:6006
 ```
