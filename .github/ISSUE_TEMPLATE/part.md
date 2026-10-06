@@ -24,5 +24,5 @@ assignees: ""
 
 - [ ] README 진행표 상태 갱신
 - [ ] `docs/00_progress.md`에 기록
-- [ ] 블로그 초안 작성 (`blog/drafts/`)
+- [ ] 블로그 초안 작성 (로컬 `blog/drafts/`, git에 넣지 않음)
 - [ ] 외부 블로그에 게시하고 URL을 README에 링크

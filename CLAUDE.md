@@ -29,7 +29,7 @@ Shawn Hymel의 RL for Robotics 튜토리얼(Part 1~6)을 NU54-DK(nRF54L15)와 �
 - 원본 폴더(`workspace/software/0N-*`, `workspace/mechanical/`, `Dockerfile.*`, `scripts/`)는 **수정하지 않는다** (upstream merge 용이). 고칠 때는 `workspace/nu54/`로 복사해서 고친다
 - 내 섀시 모델·학습 코드: `workspace/nu54/` · 펌웨어: `firmware/` (HW 브링업 #9부터)
 - 이미지: `docs/images/`, 영어 소문자·하이픈/밑줄 이름
-- 블로그 초안: `blog/drafts/partN-*.md` (외부 블로그에 게시 후 front matter `published_url`과 README에 링크)
+- 블로그 초안: `blog/drafts/` (**git에 넣지 않음**, `.gitignore`). 붙여 넣기용 `.txt`도 같이 만든다. 게시 후 URL은 README 진행표에 링크
 - 학습 노트 `docs/rl-notes.md`: **답을 대신 써 넣지 않는다.** 질문, 힌트, 실험 제안까지만 한다. 사용자 답에 대한 힌트는 회고의 다음 세션 체크리스트에 적는다
 - 값을 바꾸는 실험은 `docs/experiments.md`에 예측(실행 전) → 결과 → 해석. 노트북은 `workspace/nu54/0N-*/`에 복사해서 고친다
 - 진행 단계를 안내할 때는 단계 이름 + 파일 경로 + 할 일을 함께 쓴다

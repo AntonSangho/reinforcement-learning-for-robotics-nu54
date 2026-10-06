@@ -16,7 +16,7 @@ MuJoCo 시뮬레이터에서 **강화학습(PPO)으로 학습한 정책**을 실
 |---|---|
 | 학습·시뮬레이션 코드 | `workspace/nu54/` |
 | NU54-DK 펌웨어 (Zephyr) | `firmware/` |
-| 단계별 블로그 글 | 초안 `blog/drafts/` → 외부 블로그에 게시 (아래 진행표에 링크) |
+| 단계별 블로그 글 | 외부 블로그에 게시 (아래 진행표에 링크). 초안은 저장소에 넣지 않음 |
 | 진행 기록과 학습 노트 | `docs/` |
 
 ## 진행 상황
@@ -24,14 +24,14 @@ MuJoCo 시뮬레이터에서 **강화학습(PPO)으로 학습한 정책**을 실
 | 단계 | 내용 | 상태 | Issue | 블로그 |
 |---|---|---|---|---|
 | 0 | 저장소·개발 환경 세팅 | ✅ | [#1](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/1) | — |
-| 1 | CAD → MuJoCo 시뮬레이터 | 🟡 | [#2](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/2) | [초안](blog/drafts/part1-cad-to-mujoco.md) |
-| 2 | PPO로 균형 잡기 학습 | ⬜ | [#3](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/3) | [초안](blog/drafts/part2-train-with-ppo.md) |
+| 1 | CAD → MuJoCo 시뮬레이터 | 🟡 | [#2](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/2) | — |
+| 2 | PPO로 균형 잡기 학습 | ⬜ | [#3](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/3) | — |
 | HW | 하드웨어 브링업: 배선, IMU·모터·엔코더 시험, 실측 (1~2단계와 나란히) | ⬜ | [#9](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/9) | — |
 | 2.5 | 내 섀시 모델링(CAD → MJCF)과 재학습 | ⬜ | [#4](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/4) | (2편 또는 3편에 포함) |
-| 3 | Sim → Real: NU54-DK에 정책 배포 | ⬜ | [#5](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/5) | [초안](blog/drafts/part3-sim-to-real.md) |
-| 4 | Domain Randomization | ⬜ | [#6](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/6) | [초안](blog/drafts/part4-domain-randomization.md) |
-| 5 | 명령(전진·후진·회전) 추가 | ⬜ | [#7](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/7) | [초안](blog/drafts/part5-commands.md) |
-| 6 | RC 밸런스 봇 (BLE + Web Bluetooth) | ⬜ | [#8](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/8) | [초안](blog/drafts/part6-rc-balance-bot.md) |
+| 3 | Sim → Real: NU54-DK에 정책 배포 | ⬜ | [#5](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/5) | — |
+| 4 | Domain Randomization | ⬜ | [#6](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/6) | — |
+| 5 | 명령(전진·후진·회전) 추가 | ⬜ | [#7](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/7) | — |
+| 6 | RC 밸런스 봇 (BLE + Flutter 앱, QR로 로봇 선택) | ⬜ | [#8](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/8) | — |
 
 ⬜ 시작 전 · 🟡 진행 중 · ✅ 완료 — 날짜별 기록과 다음 할 일: [docs/00_progress.md](docs/00_progress.md)
 
@@ -50,7 +50,7 @@ MuJoCo 시뮬레이터에서 **강화학습(PPO)으로 학습한 정책**을 실
         ↓
 [5] 목표 속도·회전 명령을 따르도록 학습
         ↓
-[6] 스마트폰·PC 브라우저에서 BLE로 조종
+[6] Flutter 앱으로 QR 찍어 로봇 선택 → BLE로 조종
 ```
 
 ## 하드웨어
@@ -98,7 +98,6 @@ docker stop rl-robotics   # 끝낼 때 (--rm이라 컨테이너도 지워짐)
 | `firmware/` | NU54-DK Zephyr 펌웨어 (HW 브링업부터) |
 | `workspace/software/`, `workspace/mechanical/` | 참고용 원본 튜토리얼 코드와 Bala2 모델 (수정하지 않음) |
 | `docs/` | 진행 기록, 환경 세팅, 하드웨어, 강화학습 학습 노트 |
-| `blog/drafts/` | 블로그 초안 |
 
 ## 문서
 

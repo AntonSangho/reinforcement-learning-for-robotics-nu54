@@ -24,3 +24,5 @@ videos/
 
 # Others
 .Trash-*/
+# Blog drafts (local only, not committed)
+blog/
