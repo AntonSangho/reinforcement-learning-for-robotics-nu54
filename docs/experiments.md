@@ -16,7 +16,12 @@
 - 노트북: `workspace/nu54/01-test-model-in-mujoco/solution_simple_pid.ipynb` (원본 복사본)
 - 모델: `workspace/mechanical/FreeCAD/bala2-fire/bala2-fire-simplified.xml` (timestep 5 ms)
 - 제어: `motor = clamp(KP * pitch + KD * pitch_rate)`, |pitch| > 30°이면 모터 정지
-- 외란: MuJoCo 창에서 몸체 더블클릭 → Ctrl + 마우스 오른쪽 드래그
+- 외란: 키보드 (복사본에 추가). MuJoCo 창을 클릭해 포커스를 준 뒤
+  - ↑ / ↓: 몸체 무게중심에 앞(초록 상자 쪽) / 뒤 방향으로 `PUSH_FORCE` N을 0.1초 동안 가함
+  - → / ←: 미는 힘 ±0.05 N (기본 0.1 N, Jupyter 출력 `push force`에 표시)
+  - Backspace: 리셋
+  - 마우스 섭동(더블클릭 + Ctrl 드래그)은 WebTop에서 선택이 잘 안 되고 힘의 크기가 매번 달라 쓰지 않음
+- 실험마다 **같은 힘**으로 비교한다. 결과 칸에 힘(N)과 방향, 넘어졌는지, 넘어졌다면 몇 초 뒤인지를 적는다
 
 ### 기준값
 
