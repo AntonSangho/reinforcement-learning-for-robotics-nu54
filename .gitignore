@@ -26,3 +26,8 @@ videos/
 .Trash-*/
 # Blog drafts (local only, not committed)
 blog/
+
+# Firmware build output and local tool links (fw script)
+firmware/projects/*/build/
+firmware/projects/*/build_*/
+firmware/.tools/

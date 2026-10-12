@@ -1,0 +1,64 @@
+/* Qwiic(J5) I2C : IMU(MPU-6050, 0x68), PMIC (보드 기본값은 disabled) */
+
+&i2c21 {
+	status = "okay";
+};
+
+/*
+ * 모터 PWM : PWM20 은 P1 포트 핀에서만 동작한다.
+ *   OUT0 → P1.10 (LED2 핀) → TB6612 PWMA
+ *   OUT1 → P1.14 (LED4 핀) → TB6612 PWMB
+ */
+&pinctrl {
+	pwm20_default: pwm20_default {
+		group1 {
+			psels = <NRF_PSEL(PWM_OUT0, 1, 10)>,
+				<NRF_PSEL(PWM_OUT1, 1, 14)>;
+		};
+	};
+
+	pwm20_sleep: pwm20_sleep {
+		group1 {
+			psels = <NRF_PSEL(PWM_OUT0, 1, 10)>,
+				<NRF_PSEL(PWM_OUT1, 1, 14)>;
+			low-power-enable;
+		};
+	};
+};
+
+&pwm20 {
+	status = "okay";
+	pinctrl-0 = <&pwm20_default>;
+	pinctrl-1 = <&pwm20_sleep>;
+	pinctrl-names = "default", "sleep";
+};
+
+/*
+ * 모터 방향 핀 (헤더 P2). STBY 는 3.3 V 에 고정.
+ *   AIN1 P2.00, AIN2 P2.01, BIN1 P2.02, BIN2 P2.03
+ */
+/ {
+	motor {
+		compatible = "gpio-leds";
+
+		ain1: ain1 {
+			gpios = <&gpio2 0 GPIO_ACTIVE_HIGH>;
+		};
+		ain2: ain2 {
+			gpios = <&gpio2 1 GPIO_ACTIVE_HIGH>;
+		};
+		bin1: bin1 {
+			gpios = <&gpio2 2 GPIO_ACTIVE_HIGH>;
+		};
+		bin2: bin2 {
+			gpios = <&gpio2 3 GPIO_ACTIVE_HIGH>;
+		};
+	};
+
+	zephyr,user {
+		/* 엔코더 (모터 A) : 노랑 = P2.04 (A), 초록 = P2.05 (B). 엔코더 전원은 3.3 V */
+		enc-gpios = <&gpio2 4 GPIO_PULL_UP>, <&gpio2 5 GPIO_PULL_UP>;
+		pwms = <&pwm20 0 PWM_USEC(50) PWM_POLARITY_NORMAL>,
+		       <&pwm20 1 PWM_USEC(50) PWM_POLARITY_NORMAL>;
+	};
+};

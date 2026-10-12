@@ -26,7 +26,7 @@ MuJoCo 시뮬레이터에서 **강화학습(PPO)으로 학습한 정책**을 실
 | 0 | 저장소·개발 환경 세팅 | ✅ | [#1](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/1) | — |
 | 1 | CAD → MuJoCo 시뮬레이터 | 🟡 | [#2](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/2) | — |
 | 2 | PPO로 균형 잡기 학습 | ⬜ | [#3](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/3) | — |
-| HW | 하드웨어 브링업: 배선, IMU·모터·엔코더 시험, 실측 (1~2단계와 나란히) | ⬜ | [#9](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/9) | — |
+| HW | 하드웨어 브링업: 배선, IMU·모터·엔코더 시험, 실측 (1~2단계와 나란히) | 🟡 | [#9](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/9) | — |
 | 2.5 | 내 섀시 모델링(CAD → MJCF)과 재학습 | ⬜ | [#4](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/4) | (2편 또는 3편에 포함) |
 | 3 | Sim → Real: NU54-DK에 정책 배포 | ⬜ | [#5](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/5) | — |
 | 4 | Domain Randomization | ⬜ | [#6](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/6) | — |

@@ -5,8 +5,8 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 
 ## 지금 상태
 
-- 현재 Part: **1 (CAD → MuJoCo 시뮬레이터)**, Issue #2
-- 다음 할 일: Part 1 PID 외란 테스트와 실험 A~E ([experiments.md](experiments.md)), `rl-notes.md` 남은 질문 → Issue #2 닫기. HW 브링업(#9)은 나란히
+- 현재 Part: **1 (CAD → MuJoCo 시뮬레이터)**, Issue #2 · **HW 브링업 #9는 모터·엔코더 A까지 완료**
+- 다음 할 일: Part 1 PID 외란 테스트와 실험 A~E ([experiments.md](experiments.md)), `rl-notes.md` 남은 질문 → Issue #2 닫기. HW(#9)는 데드존·12 V·B 채널·IMU가 남음 (회고 3 §4)
 - 팀 일정: 10/14 오프라인 모임(모터 도착, 부품 확인, HW 담당과 기구 정보 논의) · **11/25 최종 발표**
 
 ## 결정 사항
@@ -27,6 +27,8 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 | 2026-10-06 | Part 6 조종 앱은 Flutter (BLE) | 팀 계획. Web Bluetooth는 튜토리얼을 따른 것이었음 |
 | 2026-10-06 | 여러 대 중 로봇 선택은 QR 코드 먼저, NFC는 보류 | 멘토 추천. NFC 핀 P1.02/P1.03이 IMU의 I2C(Qwiic)와 겹침 |
 | 2026-10-06 | 전용 PCB 보류 | PCB 제작 지원은 1등 팀만 |
+| 2026-10-12 | 엔코더는 P2 폴링(100 µs 타이머, ×4)으로 시작, 최종 핀은 2번째 엔코더 때 | P2는 GPIO 인터럽트 불가 (`gpio2`에 `gpiote-instance` 없음 → -ENOTSUP). P1에는 자유 핀이 거의 없음 |
+| 2026-10-12 | 펌웨어 플래시는 J-Link(`DISABLE_SWD` ON)로 | 온보드 DAP(pyOCD)는 이 보드에서 `No ACK`로 안 붙었음 (원인 미확정) |
 | 2026-10-06 | 블로그 초안(`blog/`)은 git에 넣지 않음 (`.gitignore`, 기존 Part 초안도 추적 해제) | 블로그 내용은 외부 블로그에만 둠. README에는 게시 URL만 링크 |
 
 ## 기록
@@ -69,3 +71,13 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 - 모터(JGA25-370 엔코더 모터) 4개 선주문, 10/14 전 도착 예정
 
 <!-- 새 기록은 이 아래에 추가 -->
+
+### 2026-10-12 — HW 브링업: 모터 구동 증명 (Issue #9)
+
+- 모터 도착. DP30-03C(6 V, 전류 제한 0.5 A)로 TB6612 단독 시험 → 회전, 0.04 A. 사진 `docs/images/hw-motor-test-6v.jpg`
+- `firmware/` 새로 만듦: nu54v-dk(`b794911`)의 boards·scripts·ncs_config 복사, `projects/motor` = `module` 예제에서 led·shtc3를 빼고 `motor`(PWM20 20 kHz, P1.10, 방향 P2.00/P2.01), `enc`(P2.04/P2.05, 타이머 폴링 ×4) 모듈 추가. CLI: `motor a|b duty [ms]`, `motor stop|brake|info`, `enc info|clear|watch`
+- 시험: 6 V 무부하, duty 20~100 % 정회전, −40 % 역회전, 전류 0.04~0.05 A. 엔코더 부호가 모터 방향과 일치(+7078 / −7175 틱, 3 s, 40 %, 약 9.9 rad/s)
+- **`ENC_TICKS_PER_REV` = 1496 (기어비 1:34) 잠정**: 10바퀴 실측 14701 / 14955, 2차가 이론값과 0.03 % 일치 (1차는 손으로 덜 돌린 것으로 추정)
+- 알아낸 것: ① 헤더 P2는 두 열(왼쪽 P2.xx, 오른쪽 P1.xx), `P1.0`(=P1.00)은 크리스털 핀 ② P2는 GPIO 인터럽트 불가 ③ `DISABLE_SWD` ON + J-Link일 때는 `JLinkExe`로 플래시하고, 이때 VCOM1(CLI)은 `if03` 포트 (J-Link를 꽂으면 `/dev/ttyACM*` 번호가 바뀜)
+- Issue #9에 단계마다 코멘트, 체크리스트 갱신. README 진행표 HW 🟡
+- 회고: [retros/2026-10-12_session03_hw-motor.md](retros/2026-10-12_session03_hw-motor.md)

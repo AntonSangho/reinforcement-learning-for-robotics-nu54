@@ -47,6 +47,9 @@ Shawn Hymel의 RL for Robotics 튜토리얼(Part 1~6)을 NU54-DK(nRF54L15)와 �
 
 - Zephyr, NCS v3.4.1, 보드 `nu54v_dk/nrf54l15/cpuapp`. 구조와 스크립트는 `~/projects/nu54v-dk`를 따른다 (그 저장소의 CLAUDE.md 참고)
 - 앞 예제를 복사해 모듈을 하나씩 더한다. 모듈은 자기 CLI 명령으로 시험한다
+- **플래시 방법은 보드 스위치에 따라 다르다.** `DISABLE_SWD` ON이면 온보드 DAP(`fw flash`)가 `No ACK`로 안 붙는다 → J-Link 케이블을 꽂고 `JLinkExe -device nRF54L15_M33 -if SWD -speed 4000`으로 `loadfile`. J-Link를 꽂으면 `/dev/ttyACM*` 번호가 바뀌므로 CLI는 `/dev/serial/by-id/...-if03`(VCOM1)으로 고른다. **baram-term은 `.../baram-term/.venv/bin/baram-term <포트>`로 직접 띄운다** (VCOM0에 붙이지 않는다)
+- 헤더 P2는 두 열(왼쪽 P2.xx, 오른쪽 P1.xx). `P1.0`(=P1.00)은 32 kHz 크리스털이라 신호에 쓰지 않는다 (PWMA는 `P1.10`). P2 포트는 GPIO 인터럽트가 안 된다 (엔코더는 타이머 폴링)
+- 모터·엔코더 시험 전에 파워서플라이 ON을 확인한다 (카운트 0이면 전원부터)
 - 보드 CLI 시험은 `baram-term` 스킬(`baram-ctl`)로 보낸다. 포트를 직접 열지 않는다
 - 정책은 `workspace/software/rl/onnx_actor_to_c.py`로 `actor.h`를 만들어 쓴다 (순수 C)
 - sim ↔ real 관측 일치는 `docs/hardware.md` §4 체크리스트로 확인한다
