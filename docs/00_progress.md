@@ -69,6 +69,7 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 - 블로그 초안은 git에서 뺌: `.gitignore`에 `blog/`, 기존 Part 초안 추적 해제, README·CLAUDE.md·Issue 템플릿과 Issue #2·#3·#5~#8 문구 수정
 - Part 6을 Flutter 앱 + QR 선택으로 변경: README 진행표·흐름, Issue #8 제목·체크리스트
 - 모터(JGA25-370 엔코더 모터) 4개 선주문, 10/14 전 도착 예정
+- 게시: https://blog.naver.com/atonrq/224433383333 → README "주간 블로그" 표
 
 <!-- 새 기록은 이 아래에 추가 -->
 
