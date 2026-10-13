@@ -81,3 +81,8 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 - 알아낸 것: ① 헤더 P2는 두 열(왼쪽 P2.xx, 오른쪽 P1.xx), `P1.0`(=P1.00)은 크리스털 핀 ② P2는 GPIO 인터럽트 불가 ③ `DISABLE_SWD` ON + J-Link일 때는 `JLinkExe`로 플래시하고, 이때 VCOM1(CLI)은 `if03` 포트 (J-Link를 꽂으면 `/dev/ttyACM*` 번호가 바뀜)
 - Issue #9에 단계마다 코멘트, 체크리스트 갱신. README 진행표 HW 🟡
 - 회고: [retros/2026-10-12_session03_hw-motor.md](retros/2026-10-12_session03_hw-motor.md)
+
+### 2026-10-13 — 5주차 블로그
+
+- 5주차 블로그 글 초안 작성 (`blog/drafts/week5-motor-bringup.txt`, 붙여 넣기용). 모터 구동과 엔코더 읽기 과정, 사용한 부품, 연결 정보(핀·커넥터 선 색), 테스트 코드 GitHub 링크(커밋 `06b6685` 기준), 막힌 것과 다음 계획, 멘토 질문
+- 비어 있는 것: 모터 구동 영상, 엔코더 사진, 다른 팀원의 진행, 10/14 모임 논의
