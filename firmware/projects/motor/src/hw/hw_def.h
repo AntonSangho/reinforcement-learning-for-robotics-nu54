@@ -17,7 +17,7 @@
 #define _USE_HW_RTOS
 
 
-// LED2(P1.10), LED4(P1.14) 핀은 모터 PWM 이 쓰므로 led 모듈을 넣지 않는다.
+// LED4(P1.14) 핀은 모터 PWM 이 쓰므로 led 모듈을 넣지 않는다.
 
 /* 하드웨어 채널은 VCOM1(uart20), VCOM0(uart30). 이후 가상 채널(BLE 등)은 uart_driver_t 를 등록해 붙인다.
  * 채널 번호는 기능을 켜고 끄는 것과 상관없이 고정한다 (docs/05_uart.md 채널 표). */
@@ -39,7 +39,7 @@
 #define _USE_HW_IMU                           // MPU-6050 (0x68), i2c 채널은 imu.c 에서 지정
 
 #define _USE_HW_ENC
-#define      HW_ENC_MAX_CH          1                 // 모터 A 엔코더 (A상 P2.04, B상 P2.05)
+#define      HW_ENC_MAX_CH          2                 // 모터 A (A상 P2.04, B상 P2.05), 모터 B (A상만 P2.06)
 
 #define _USE_HW_MOTOR
 #define      HW_MOTOR_MAX_CH        2                 // A : 왼쪽, B : 오른쪽

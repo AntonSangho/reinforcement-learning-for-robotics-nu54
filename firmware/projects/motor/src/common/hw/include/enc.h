@@ -14,7 +14,7 @@ extern "C" {
 
 
 bool    encInit(void);
-int32_t encGetCount(uint8_t ch);            // A·B 양쪽 엣지 (x4) 누적 틱
+int32_t encGetCount(uint8_t ch);            // ch0: A·B 양쪽 엣지 (x4), ch1: A상 양쪽 엣지 (x2) 누적 틱
 void    encClear(uint8_t ch);
 
 #endif

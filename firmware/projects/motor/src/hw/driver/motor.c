@@ -1,7 +1,7 @@
 /*
  * motor.c — TB6612FNG 모터 드라이버 (채널 A, B)
  *
- *   PWM : PWM20 (OUT0 = P1.10 → PWMA, OUT1 = P1.14 → PWMB), 20 kHz
+ *   PWM : PWM20 (OUT0 = P1.12 → PWMA, OUT1 = P1.14 → PWMB), 20 kHz
  *   방향 : IN1/IN2 (P2.00~P2.03)
  *     IN1 IN2   동작
  *      1   0    정회전
