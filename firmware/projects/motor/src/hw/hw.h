@@ -15,6 +15,7 @@ extern "C" {
 #include "i2c.h"
 #include "motor.h"
 #include "enc.h"
+#include "imu.h"
 
 
 bool hwInit(void);

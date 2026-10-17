@@ -27,6 +27,7 @@ bool hwInit(void)
   i2cInit();
   motorInit();
   encInit();
+  imuInit();
 
   return true;
 }

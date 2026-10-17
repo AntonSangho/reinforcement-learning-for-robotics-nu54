@@ -34,6 +34,8 @@
 #define _USE_HW_I2C
 #define      HW_I2C_MAX_CH          1                 // _DEF_I2C1 : i2c21 (Qwiic J5, PMIC)
 
+#define _USE_HW_IMU                           // MPU-6050 (0x68), i2c 채널은 imu.c 에서 지정
+
 #define _USE_HW_ENC
 #define      HW_ENC_MAX_CH          1                 // 모터 A 엔코더 (A상 P2.04, B상 P2.05)
 
@@ -58,6 +60,7 @@
 #define _USE_CLI_HW_I2C             1
 #define _USE_CLI_HW_MOTOR           1
 #define _USE_CLI_HW_ENC             1
+#define _USE_CLI_HW_IMU             1
 
 
 // 보드 스위치 SW1~SW4 (DTS button0~button3)

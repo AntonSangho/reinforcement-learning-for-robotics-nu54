@@ -97,3 +97,12 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 - 배터리 라벨의 440 mAh는 4400 mAh의 오기였음 (48.84 Wh와 일치)
 - `hardware.md` §1·§5-4 갱신 (커밋 `b40a982`), #9에 #10 링크
 - 회고: [retros/2026-10-15_session04_hw-power.md](retros/2026-10-15_session04_hw-power.md)
+
+### 2026-10-17 — IMU 모듈과 pitch 부호 (Issue #11)
+
+- I2C 인식(0x68)까지 확인한 뒤 Issue [#11](https://github.com/AntonSangho/reinforcement-learning-for-robotics-nu54/issues/11)로 분리. 헤더 점퍼는 보드 표기 `P1.2`에 SCL, `P1.3`에 SDA (문서와 반대, 원인 미확정)
+- `firmware/projects/motor`에 `imu` 모듈 추가: MPU-6050, DLPF 3 / 200 Hz / 자이로 ±500 dps / 가속도 ±2 g, 14바이트 한 번에 읽기, 자이로 바이어스 보정(RAM). CLI `imu info|read|watch|cal|clear`
+- 시험: 칩 면을 위로 놓으면 정지 가속도 Z ≈ +1083 mg. 앞(핀 쪽)이 아래면 ax +, 자이로 Y −. 가속도 각도 38~41°와 자이로 적분 42° 일치
+- **결론: `pitch = +atan2(ax, az)`, `pitch_rate = −gy`** (시뮬레이션의 "앞으로 기울면 +"에 맞춤, 원본 펌웨어의 `−atan2`, `−gyro.x`와 다름). `hardware.md` §4·§5-6 반영, #11·#9 코멘트
+- 남은 것: 자이로 바이어스가 보정할 때마다 달라짐(예열·반복 보정으로 안정성 확인 후 nvs 저장), 가속도 크기 1.02~1.09 g (둘 다 #9에서 이어감). SDA/SCL 원인 확인은 생략하기로 하고 #11 닫음
+- baram-term은 Claude가 직접 실행 (`.venv/bin/baram-term <if03 포트>`, 외부 제어는 이미 켜져 있었음)
