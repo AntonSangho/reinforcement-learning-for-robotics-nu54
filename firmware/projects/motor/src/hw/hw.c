@@ -24,6 +24,7 @@ bool hwInit(void)
   logPrintf("\n");
 
   buttonInit();
+  nvsInit();
   i2cInit();
   motorInit();
   encInit();

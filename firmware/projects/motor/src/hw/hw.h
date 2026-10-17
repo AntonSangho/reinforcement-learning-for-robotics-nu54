@@ -16,6 +16,7 @@ extern "C" {
 #include "motor.h"
 #include "enc.h"
 #include "imu.h"
+#include "nvs.h"
 
 
 bool hwInit(void);

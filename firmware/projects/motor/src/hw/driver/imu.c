@@ -17,6 +17,7 @@
 #include "cli.h"
 #include "i2c.h"
 #include "log.h"
+#include "nvs.h"
 #include <zephyr/kernel.h>
 
 
@@ -42,10 +43,16 @@
 #define IMU_GYRO_LSB_X10      655               // 65.5 LSB/dps 를 10배 한 값
 #define IMU_ACCEL_LSB_PER_G   16384
 
+// 가속도 오프셋 [mg] : 6면 측정 (2026-10-17, docs/hardware.md §4). 스케일은 1 g +-0.5 % 라서 보정하지 않는다.
+#define IMU_ACCEL_OFFSET_MG   { 5, 14, 78 }
+
+#define IMU_NVS_GYRO_BIAS     "imu_gbias"       // int32_t[3], raw 단위
+
 
 static bool    is_init = false;
 static int16_t raw[7];                          // ax ay az temp gx gy gz
 static int32_t gyro_bias[3];                    // raw 단위
+static const int32_t accel_offset_mg[3] = IMU_ACCEL_OFFSET_MG;
 
 #ifdef _USE_HW_CLI
 static void cliImu(cli_args_t *args);
@@ -75,6 +82,11 @@ bool imuInit(void)
   if (ret) ret = i2cWriteByte(IMU_I2C_CH, IMU_I2C_ADDR, REG_SMPLRT_DIV,   IMU_SMPLRT_DIV,     IMU_I2C_TIMEOUT);
   if (ret) ret = i2cWriteByte(IMU_I2C_CH, IMU_I2C_ADDR, REG_GYRO_CONFIG,  IMU_GYRO_FS_SEL << 3,  IMU_I2C_TIMEOUT);
   if (ret) ret = i2cWriteByte(IMU_I2C_CH, IMU_I2C_ADDR, REG_ACCEL_CONFIG, IMU_ACCEL_FS_SEL << 3, IMU_I2C_TIMEOUT);
+
+  if (ret && nvsGet(IMU_NVS_GYRO_BIAS, gyro_bias, sizeof(gyro_bias)))
+  {
+    logPrintf("imu gyro bias from nvs : %d %d %d\n", (int)gyro_bias[0], (int)gyro_bias[1], (int)gyro_bias[2]);
+  }
 
   is_init = ret;
   logPrintf("[%s] imuInit()\n", ret ? "OK" : "E_");
@@ -113,9 +125,9 @@ bool imuGetData(imu_data_t *p_data)
 {
   if (!is_init) return false;
 
-  p_data->ax_mg = (int32_t)raw[0] * 1000 / IMU_ACCEL_LSB_PER_G;
-  p_data->ay_mg = (int32_t)raw[1] * 1000 / IMU_ACCEL_LSB_PER_G;
-  p_data->az_mg = (int32_t)raw[2] * 1000 / IMU_ACCEL_LSB_PER_G;
+  p_data->ax_mg = (int32_t)raw[0] * 1000 / IMU_ACCEL_LSB_PER_G - accel_offset_mg[0];
+  p_data->ay_mg = (int32_t)raw[1] * 1000 / IMU_ACCEL_LSB_PER_G - accel_offset_mg[1];
+  p_data->az_mg = (int32_t)raw[2] * 1000 / IMU_ACCEL_LSB_PER_G - accel_offset_mg[2];
 
   // 온도: raw / 340 + 36.53 degC
   p_data->temp_cdeg = (int32_t)raw[3] * 100 / 340 + 3653;
@@ -150,6 +162,7 @@ bool imuCalibrateGyro(uint32_t samples)
   {
     gyro_bias[i] = (int32_t)(sum[i] / n);
   }
+  nvsSet(IMU_NVS_GYRO_BIAS, gyro_bias, sizeof(gyro_bias));
   return true;
 }
 
@@ -159,6 +172,7 @@ void imuClearBias(void)
   {
     gyro_bias[i] = 0;
   }
+  nvsDel(IMU_NVS_GYRO_BIAS);
 }
 
 

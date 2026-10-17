@@ -106,3 +106,11 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 - **결론: `pitch = +atan2(ax, az)`, `pitch_rate = −gy`** (시뮬레이션의 "앞으로 기울면 +"에 맞춤, 원본 펌웨어의 `−atan2`, `−gyro.x`와 다름). `hardware.md` §4·§5-6 반영, #11·#9 코멘트
 - 남은 것: 자이로 바이어스가 보정할 때마다 달라짐(예열·반복 보정으로 안정성 확인 후 nvs 저장), 가속도 크기 1.02~1.09 g (둘 다 #9에서 이어감). SDA/SCL 원인 확인은 생략하기로 하고 #11 닫음
 - baram-term은 Claude가 직접 실행 (`.venv/bin/baram-term <if03 포트>`, 외부 제어는 이미 켜져 있었음)
+
+### 2026-10-17 — 자이로 바이어스·가속도 오프셋 (Issue #9, 세션 6)
+
+- 자이로 바이어스 3회 보정(30초 간격, 정지 고정, 칩 27.5 °C): 모두 −26 172 26 raw → 이전의 들쭉날쭉한 값은 자세를 옮긴 직후 보정한 탓
+- 가속도 6면 평균: 오프셋 X +5 / Y +14 / Z +78 mg, 스케일 1.000 / 0.997 / 1.005 g → 1.02~1.09 g의 원인은 Z 오프셋. 손으로 세운 면은 5~12° 기울어 몇 mg 오차가 있음
+- `motor` 프로젝트에 `nvs` 모듈(nu54v-dk에서 복사, Settings+ZMS) 추가. `imu`: 가속도 오프셋 상수 적용(`IMU_ACCEL_OFFSET_MG`), `imu cal`이 바이어스를 nvs에 저장하고 부팅 때 불러옴, `imu clear`는 저장값도 삭제. J-Link로 플래시, Z+ 면 |g| 1081 → 1000.4 mg, 리셋 후 바이어스 복원 확인
+- 알아낸 것: `imu watch <ms>`의 인자는 기간이 아니라 출력 간격이고 키 입력이 올 때까지 돈다 (`baram-ctl send "imu watch 20" --timeout 2` 후 `send q`로 끊음)
+- SDA/SCL 원인 확인은 하지 않기로 함 (사용자 결정). 회고: [retros/2026-10-17_session06_hw-imu-calibration.md](retros/2026-10-17_session06_hw-imu-calibration.md)

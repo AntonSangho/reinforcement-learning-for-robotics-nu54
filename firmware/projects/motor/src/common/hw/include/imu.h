@@ -22,7 +22,7 @@ bool imuInit(void);
 bool imuIsInit(void);
 bool imuUpdate(void);                   // 14바이트를 한 번에 읽어 최신 값을 갱신
 bool imuGetData(imu_data_t *p_data);    // imuUpdate() 가 읽어 둔 값
-bool imuCalibrateGyro(uint32_t samples);// 정지 상태 평균으로 자이로 바이어스를 구한다 (RAM)
+bool imuCalibrateGyro(uint32_t samples);// 정지 상태 평균으로 자이로 바이어스를 구해 nvs 에 저장한다
 void imuClearBias(void);
 
 #endif
