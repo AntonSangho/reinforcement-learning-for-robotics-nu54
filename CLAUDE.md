@@ -39,8 +39,8 @@ Shawn Hymel의 RL for Robotics 튜토리얼(Part 1~6)을 NU54-DK(nRF54L15)와 �
 
 - MPU-6050(I2C 0x68, Qwiic J5 i2c21) · TB6612FNG · JGA25-370 12 V 170 rpm + 홀 엔코더 11 PPR(기어비 1:34 추정, 실측 필요) · 바퀴 80 mm · 3S 18650 · 5 V 벅
 - **엔코더 전원은 3.3 V** (출력이 nRF54L15 핀에 바로 들어감, 5 V 입력 불가)
-- **PWM은 P1 포트에서만** → 모터 PWM은 P1.10 / P1.14 (LED2/LED4 핀)
-- 보드 기능에 묶이지 않은 핀은 P2.00~P2.06 (7개)뿐 → 핀 예산 확인
+- **PWM은 P1 포트에서만** → 모터 PWM은 P1.10(P4-8) / P1.14(P4-12) (LED2/LED4 핀). P1.12(VBAT_MON, 100 nF)는 쓰지 않는다
+- 헤더는 **P4(왼쪽)와 P2(오른쪽)** 두 개. 핀 위치는 `docs/images/NU54V-DK_pinoutfrom_baram.png`와 회로도 시트 9가 기준 (옛 `nu-54dk_pinmap.png`는 P4의 `1.10`이 빠져 있음). 자유 핀은 P2.00~P2.06 7개 + LED 핀(P1.10, P1.14, P2.09, P2.07) + 입력 전용 버튼 핀. 확정 핀맵: `docs/hardware.md` §3
 - **VCOM0를 쓰면 SWD가 죽는다** → CLI는 VCOM1
 
 ## 펌웨어 (HW 브링업 #9~)
@@ -49,7 +49,7 @@ Shawn Hymel의 RL for Robotics 튜토리얼(Part 1~6)을 NU54-DK(nRF54L15)와 �
 - 앞 예제를 복사해 모듈을 하나씩 더한다. 모듈은 자기 CLI 명령으로 시험한다
 - **플래시 방법은 보드 스위치에 따라 다르다.** `DISABLE_SWD` ON이면 온보드 DAP(`fw flash`)가 `No ACK`로 안 붙는다 → J-Link 케이블을 꽂고 `JLinkExe -device nRF54L15_M33 -if SWD -speed 4000`으로 `loadfile`. J-Link를 꽂으면 `/dev/ttyACM*` 번호가 바뀌므로 CLI는 `/dev/serial/by-id/...-if03`(VCOM1)으로 고른다. **baram-term은 `.../baram-term/.venv/bin/baram-term <포트>`로 직접 띄운다** (VCOM0에 붙이지 않는다)
 - 헤더 P2는 두 열(왼쪽 P2.xx, 오른쪽 P1.xx). `P1.0`(=P1.00)은 32 kHz 크리스털이라 신호에 쓰지 않는다 (PWMA는 `P1.10`). P2 포트는 GPIO 인터럽트가 안 된다 (엔코더는 타이머 폴링)
-- 모터·엔코더 시험 전에 파워서플라이 ON을 확인한다 (카운트 0이면 전원부터)
+- 모터·엔코더 시험 전에 파워서플라이 ON을 확인한다 (카운트 0이면 전원부터. 모터가 안 돌거나 J-Link 플래시가 `Target voltage too low`면 전원·케이블부터 묻는다)
 - 보드 CLI 시험은 `baram-term` 스킬(`baram-ctl`)로 보낸다. 포트를 직접 열지 않는다
 - 정책은 `workspace/software/rl/onnx_actor_to_c.py`로 `actor.h`를 만들어 쓴다 (순수 C)
 - sim ↔ real 관측 일치는 `docs/hardware.md` §4 체크리스트로 확인한다
