@@ -49,7 +49,7 @@ Shawn Hymel의 RL for Robotics 튜토리얼(Part 1~6)을 NU54-DK(nRF54L15)와 �
 - 앞 예제를 복사해 모듈을 하나씩 더한다. 모듈은 자기 CLI 명령으로 시험한다
 - **플래시 방법은 보드 스위치에 따라 다르다.** `DISABLE_SWD` ON이면 온보드 DAP(`fw flash`)가 `No ACK`로 안 붙는다 → J-Link 케이블을 꽂고 `JLinkExe -device nRF54L15_M33 -if SWD -speed 4000`으로 `loadfile`. J-Link를 꽂으면 `/dev/ttyACM*` 번호가 바뀌므로 CLI는 `/dev/serial/by-id/...-if03`(VCOM1)으로 고른다. **baram-term은 `.../baram-term/.venv/bin/baram-term <포트>`로 직접 띄운다** (VCOM0에 붙이지 않는다)
 - 헤더 P2는 두 열(왼쪽 P2.xx, 오른쪽 P1.xx). `P1.0`(=P1.00)은 32 kHz 크리스털이라 신호에 쓰지 않는다 (PWMA는 `P1.10`). P2 포트는 GPIO 인터럽트가 안 된다 (엔코더는 타이머 폴링)
-- 모터·엔코더 시험 전에 파워서플라이 ON을 확인한다 (카운트 0이면 전원부터. 모터가 안 돌거나 J-Link 플래시가 `Target voltage too low`면 전원·케이블부터 묻는다)
+- 모터·엔코더 시험 전에 파워서플라이 ON과 **STELA DC-DC 스위치 J2 ON**을 확인한다 (카운트 0이면 전원부터. 한 모터만 0이면 `motor x 50`을 켜 두고 TB6612 핀 전압, `hardware.md` §3 배선 점검 순서. 모터가 안 돌거나 J-Link 플래시가 `Target voltage too low`면 전원·케이블부터 묻는다)
 - 보드 CLI 시험은 `baram-term` 스킬(`baram-ctl`)로 보낸다. 포트를 직접 열지 않는다
 - 사용자가 손·눈으로 하는 실측(스톨 전류 등)은 이유를 먼저 설명하고, 명령을 보내기 직전에 알린다. `motor x duty ms`는 그 시간 동안 CLI를 막으므로 구동 시간 뒤에 `enc info`를 읽는다. 스톨은 전류보다 `enc` 틱으로 판단한다
 - 정책은 `workspace/software/rl/onnx_actor_to_c.py`로 `actor.h`를 만들어 쓴다 (순수 C)

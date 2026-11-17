@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module fritzingVersion="1.0.8" icon="Mine.png" >
+    <title>NU54V-DK</title>
+    <instances>
+        <instance moduleIdRef="NU54V-DK_nucode_v3" modelIndex="5000" path="part.NU54V-DK_nucode_v3.fzp">
+            <title>NU54V-DK (nRF54L15)</title>
+            <views>
+                <iconView layer="icon"><geometry z="0" x="0" y="0"/></iconView>
+            </views>
+        </instance>
+    </instances>
+</module>
