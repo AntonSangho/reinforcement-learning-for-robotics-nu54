@@ -37,8 +37,9 @@ Shawn Hymel의 RL for Robotics 튜토리얼(Part 1~6)을 NU54-DK(nRF54L15)와 �
 
 ## 하드웨어 요약 (자세히: docs/hardware.md)
 
-- MPU-6050(I2C 0x68, Qwiic J5 i2c21) · TB6612FNG · JGA25-370 12 V 170 rpm + 홀 엔코더 11 PPR(기어비 1:34 추정, 실측 필요) · 바퀴 80 mm · 3S 18650 · 5 V 벅
+- MPU-6050(I2C 0x68, Qwiic J5 i2c21) · TB6612FNG · JGA25-370 12 V 170 rpm + 홀 엔코더 11 PPR(기어비 1:34, 1496틱/회전) · 바퀴 실측 지름 75 mm(사양 80), 트랙 폭 245 mm · 3S 18650 · STELA DC-DC (VM ≈ 배터리 전압)
 - **엔코더 전원은 3.3 V** (출력이 nRF54L15 핀에 바로 들어감, 5 V 입력 불가)
+- **보드 5 V는 VEXT로** (쇼트키 OR라 USB와 같이 꽂아도 됨). **VBAT는 충전 IC의 1셀 배터리 핀**이라 5 V를 넣지 않는다 (2026-11-22 이전)
 - **PWM은 P1 포트에서만** → 모터 PWM은 P1.10(P4-8) / P1.14(P4-12) (LED2/LED4 핀). P1.12(VBAT_MON, 100 nF)는 쓰지 않는다
 - 헤더는 **P4(왼쪽)와 P2(오른쪽)** 두 개. 핀 위치는 `docs/images/NU54V-DK_pinoutfrom_baram.png`와 회로도 시트 9가 기준 (옛 `nu-54dk_pinmap.png`는 P4의 `1.10`이 빠져 있음). 자유 핀은 P2.00~P2.06 7개 + LED 핀(P1.10, P1.14, P2.09, P2.07) + 입력 전용 버튼 핀. 확정 핀맵: `docs/hardware.md` §3
 - **VCOM0를 쓰면 SWD가 죽는다** → CLI는 VCOM1
@@ -52,6 +53,7 @@ Shawn Hymel의 RL for Robotics 튜토리얼(Part 1~6)을 NU54-DK(nRF54L15)와 �
 - 모터·엔코더 시험 전에 파워서플라이 ON과 **STELA DC-DC 스위치 J2 ON**을 확인한다 (카운트 0이면 전원부터. 한 모터만 0이면 `motor x 50`을 켜 두고 TB6612 핀 전압, `hardware.md` §3 배선 점검 순서. 모터가 안 돌거나 J-Link 플래시가 `Target voltage too low`면 전원·케이블부터 묻는다)
 - 보드 CLI 시험은 `baram-term` 스킬(`baram-ctl`)로 보낸다. 포트를 직접 열지 않는다
 - 사용자가 손·눈으로 하는 실측(스톨 전류 등)은 이유를 먼저 설명하고, 명령을 보내기 직전에 알린다. `motor x duty ms`는 그 시간 동안 CLI를 막으므로 구동 시간 뒤에 `enc info`를 읽는다. 스톨은 전류보다 `enc` 틱으로 판단한다
+- **`safety` 모듈이 누워 있으면(|pitch| > 45°) 모터를 잠근다.** 벤치 시험은 세워 들고 `safety reset`, 또는 `safety off`(리셋하면 다시 ON). duty 상한 60 %(`motor max n`). trip 확인은 `safety info`의 `count`로 (`baram-ctl read` 버퍼에 옛 trip 줄이 남음)
 - 정책은 `workspace/software/rl/onnx_actor_to_c.py`로 `actor.h`를 만들어 쓴다 (순수 C)
 - sim ↔ real 관측 일치는 `docs/hardware.md` §4 체크리스트로 확인한다
 

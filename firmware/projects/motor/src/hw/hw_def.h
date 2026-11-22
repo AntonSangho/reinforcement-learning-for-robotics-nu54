@@ -12,6 +12,8 @@
 
 #define _HW_DEF_RTOS_THREAD_PRI_CLI           5
 #define _HW_DEF_RTOS_THREAD_MEM_CLI           (4*1024)
+#define _HW_DEF_RTOS_THREAD_PRI_SAFETY        4       // cli 보다 높게 : motor x duty ms 로 cli 가 잠들어도 돈다
+#define _HW_DEF_RTOS_THREAD_MEM_SAFETY        (2*1024)
 
 
 #define _USE_HW_RTOS
@@ -43,7 +45,7 @@
 
 #define _USE_HW_MOTOR
 #define      HW_MOTOR_MAX_CH        2                 // A : 왼쪽, B : 오른쪽
-#define      HW_MOTOR_DUTY_MAX      100               // % (전원 전압에 따라 낮춘다)
+#define      HW_MOTOR_DUTY_MAX      60                // % 12 V 스톨 >=1.6 A 를 TB6612 지속 1.2 A 아래로 (2026-11-22)
 
 #define _USE_HW_BUTTON
 #define      HW_BUTTON_MAX_CH       BUTTON_PIN_MAX

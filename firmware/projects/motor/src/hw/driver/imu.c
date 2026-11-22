@@ -54,6 +54,9 @@ static int16_t raw[7];                          // ax ay az temp gx gy gz
 static int32_t gyro_bias[3];                    // raw 단위
 static const int32_t accel_offset_mg[3] = IMU_ACCEL_OFFSET_MG;
 
+// raw[] 는 cli 스레드(imu read/watch)와 safety 스레드가 같이 쓴다. 복사하는 동안만 잠근다.
+static K_MUTEX_DEFINE(raw_mutex);
+
 #ifdef _USE_HW_CLI
 static void cliImu(cli_args_t *args);
 #endif
@@ -114,27 +117,35 @@ bool imuUpdate(void)
     return false;
   }
 
+  k_mutex_lock(&raw_mutex, K_FOREVER);
   for (int i=0; i<7; i++)
   {
     raw[i] = (int16_t)((buf[i*2] << 8) | buf[i*2 + 1]);     // 상위 바이트가 먼저
   }
+  k_mutex_unlock(&raw_mutex);
   return true;
 }
 
 bool imuGetData(imu_data_t *p_data)
 {
+  int16_t r[7];
+
   if (!is_init) return false;
 
-  p_data->ax_mg = (int32_t)raw[0] * 1000 / IMU_ACCEL_LSB_PER_G - accel_offset_mg[0];
-  p_data->ay_mg = (int32_t)raw[1] * 1000 / IMU_ACCEL_LSB_PER_G - accel_offset_mg[1];
-  p_data->az_mg = (int32_t)raw[2] * 1000 / IMU_ACCEL_LSB_PER_G - accel_offset_mg[2];
+  k_mutex_lock(&raw_mutex, K_FOREVER);
+  memcpy(r, raw, sizeof(r));
+  k_mutex_unlock(&raw_mutex);
+
+  p_data->ax_mg = (int32_t)r[0] * 1000 / IMU_ACCEL_LSB_PER_G - accel_offset_mg[0];
+  p_data->ay_mg = (int32_t)r[1] * 1000 / IMU_ACCEL_LSB_PER_G - accel_offset_mg[1];
+  p_data->az_mg = (int32_t)r[2] * 1000 / IMU_ACCEL_LSB_PER_G - accel_offset_mg[2];
 
   // 온도: raw / 340 + 36.53 degC
-  p_data->temp_cdeg = (int32_t)raw[3] * 100 / 340 + 3653;
+  p_data->temp_cdeg = (int32_t)r[3] * 100 / 340 + 3653;
 
-  p_data->gx_mdps = ((int32_t)raw[4] - gyro_bias[0]) * 10000 / IMU_GYRO_LSB_X10;
-  p_data->gy_mdps = ((int32_t)raw[5] - gyro_bias[1]) * 10000 / IMU_GYRO_LSB_X10;
-  p_data->gz_mdps = ((int32_t)raw[6] - gyro_bias[2]) * 10000 / IMU_GYRO_LSB_X10;
+  p_data->gx_mdps = ((int32_t)r[4] - gyro_bias[0]) * 10000 / IMU_GYRO_LSB_X10;
+  p_data->gy_mdps = ((int32_t)r[5] - gyro_bias[1]) * 10000 / IMU_GYRO_LSB_X10;
+  p_data->gz_mdps = ((int32_t)r[6] - gyro_bias[2]) * 10000 / IMU_GYRO_LSB_X10;
   return true;
 }
 
@@ -149,9 +160,11 @@ bool imuCalibrateGyro(uint32_t samples)
   {
     if (imuUpdate())
     {
+      k_mutex_lock(&raw_mutex, K_FOREVER);
       sum[0] += raw[4];
       sum[1] += raw[5];
       sum[2] += raw[6];
+      k_mutex_unlock(&raw_mutex);
       n++;
     }
     k_msleep(5);                                // 출력 주기 200 Hz 에 맞춤

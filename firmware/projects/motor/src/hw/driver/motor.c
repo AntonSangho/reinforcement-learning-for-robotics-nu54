@@ -9,6 +9,11 @@
  *      0   0    코스팅 (정지, 공회전)
  *      1   1    브레이크
  *   STBY 는 3.3 V 에 고정한다.
+ *
+ *   안전 (docs/hardware.md §5) :
+ *     duty 상한  : 12 V 스톨 전류(>=1.6 A)가 TB6612 지속 1.2 A 를 넘으므로 HW_MOTOR_DUTY_MAX 로 자른다.
+ *                  `motor max n` 으로 바꿀 수 있고 리셋하면 기본값으로 돌아온다.
+ *     잠금       : motorLock(true) 이면 모터를 세우고 motorSet() 을 0 으로만 받는다 (safety 모듈이 쓴다).
  */
 
 #include "motor.h"
@@ -28,6 +33,9 @@ typedef struct
   struct gpio_dt_spec in2;
   int32_t             duty;
 } motor_tbl_t;
+
+static int32_t      duty_max = HW_MOTOR_DUTY_MAX;
+static volatile bool is_lock = false;
 
 static motor_tbl_t motor_tbl[MOTOR_MAX_CH] = {
   {PWM_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), 0),
@@ -79,8 +87,15 @@ bool motorSet(uint8_t ch, int32_t duty)
 {
   if (ch >= MOTOR_MAX_CH) return false;
 
-  if (duty >  HW_MOTOR_DUTY_MAX) duty =  HW_MOTOR_DUTY_MAX;
-  if (duty < -HW_MOTOR_DUTY_MAX) duty = -HW_MOTOR_DUTY_MAX;
+  bool ret = true;
+
+  if (is_lock && duty != 0)
+  {
+    duty = 0;
+    ret  = false;
+  }
+  if (duty >  duty_max) duty =  duty_max;
+  if (duty < -duty_max) duty = -duty_max;
 
   motor_tbl_t *p = &motor_tbl[ch];
 
@@ -89,7 +104,7 @@ bool motorSet(uint8_t ch, int32_t duty)
   setPwm(ch, (uint32_t)(duty < 0 ? -duty : duty));
   p->duty = duty;
 
-  return true;
+  return ret;
 }
 
 void motorBrake(uint8_t ch)
@@ -117,6 +132,38 @@ int32_t motorGet(uint8_t ch)
   return motor_tbl[ch].duty;
 }
 
+void motorSetDutyMax(int32_t max)
+{
+  if (max < 0)   max = 0;
+  if (max > 100) max = 100;
+  duty_max = max;
+
+  // 이미 돌고 있는 모터도 새 상한으로 다시 자른다.
+  for (int i=0; i<MOTOR_MAX_CH; i++)
+  {
+    motorSet(i, motor_tbl[i].duty);
+  }
+}
+
+int32_t motorGetDutyMax(void)
+{
+  return duty_max;
+}
+
+void motorLock(bool lock)
+{
+  is_lock = lock;
+  if (lock)
+  {
+    motorStop();
+  }
+}
+
+bool motorIsLock(void)
+{
+  return is_lock;
+}
+
 
 
 
@@ -134,6 +181,7 @@ void cliMotor(cli_args_t *args)
     {
       cliPrintf("%c : duty %d %%, pwm_err %d, period %u ns\n", 'a' + i, (int)motorGet(i), pwm_err[i], (unsigned)motor_tbl[i].pwm.period);
     }
+    cliPrintf("max %d %%, lock %d\n", (int)duty_max, is_lock);
     ret = true;
   }
 
@@ -153,13 +201,29 @@ void cliMotor(cli_args_t *args)
     ret = true;
   }
 
+  if (args->argc == 1 && args->isStr(0, "max") == true)
+  {
+    cliPrintf("max %d %%\n", (int)duty_max);
+    ret = true;
+  }
+
+  if (args->argc == 2 && args->isStr(0, "max") == true)
+  {
+    motorSetDutyMax(args->getData(1));
+    cliPrintf("max %d %%\n", (int)duty_max);
+    ret = true;
+  }
+
   // motor a|b duty(-100~100) [time_ms]
   if ((args->argc == 2 || args->argc == 3) && (args->isStr(0, "a") == true || args->isStr(0, "b") == true))
   {
     uint8_t ch = (args->isStr(0, "b") == true) ? 1 : 0;
     int32_t duty = args->getData(1);
 
-    motorSet(ch, duty);
+    if (motorSet(ch, duty) != true)
+    {
+      cliPrintf("locked (safety)\n");
+    }
     cliPrintf("%c : duty %d %%\n", 'a' + ch, (int)motorGet(ch));
 
     if (args->argc == 3)
@@ -177,6 +241,7 @@ void cliMotor(cli_args_t *args)
     cliPrintf("motor info\n");
     cliPrintf("motor stop\n");
     cliPrintf("motor brake a|b\n");
+    cliPrintf("motor max [0~100]\n");
     cliPrintf("motor a|b duty[-100~100] [time_ms]\n");
   }
 }

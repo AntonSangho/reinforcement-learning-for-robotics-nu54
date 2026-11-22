@@ -7,6 +7,7 @@
 
 #include "module.h"
 #include "cli/cli_mgr.h"
+#include "safety/safety.h"
 
 
 #endif

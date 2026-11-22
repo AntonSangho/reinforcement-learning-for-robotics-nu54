@@ -5,8 +5,8 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 
 ## 지금 상태
 
-- 현재 Part: **1 (CAD → MuJoCo 시뮬레이터)**, Issue #2 · **HW 브링업 #9는 모터·엔코더·IMU·데드존·스톨 전류·배터리 속도까지 실측 완료**
-- 다음 할 일: Part 1 PID 외란 테스트와 실험 A~E ([experiments.md](experiments.md)), `rl-notes.md` 남은 질문 → Issue #2 닫기. HW(#9)는 질량·무게중심·트랙 폭(저울 필요)과 USB+VBAT 5 V 역류 확인이 남음 (회고 9 §4)
+- 현재 Part: **1 (CAD → MuJoCo 시뮬레이터)**, Issue #2 · **HW 브링업 #9는 안전 펌웨어(duty 60 %, 45° 정지), 보드 전원 VEXT 이전, 트랙 폭·바퀴 지름까지 완료**
+- 다음 할 일: Part 1 PID 외란 테스트와 실험 A~E ([experiments.md](experiments.md)), `rl-notes.md` 남은 질문 → Issue #2 닫기. HW(#9)는 질량·무게중심(저울 필요)만 남음 (회고 11 §4)
 - 팀 일정: 10/14 오프라인 모임(모터 도착, 부품 확인, HW 담당과 기구 정보 논의) · **11/25 최종 발표**
 
 ## 결정 사항
@@ -161,3 +161,14 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 - 부품 재배치하며 IMU 재배선: 처음엔 `i2c scan`에 0x68 없음(PMIC 0x6A만) → 다시 꽂자 WHO_AM_I 0x68. `imu` 모듈은 부팅 때만 초기화하므로 리셋 후 `init 1` (자이로 보정값 nvs에서 불러옴)
 - **pitch 축·부호 재측정** (섀시 장착, 앞 = 배터리 커넥터 쪽, 손으로 기울임): 직립 (−45, −24, 949) mg, 앞으로 ax −990, 뒤로 ax +428(26.5°). 앞으로 기울이는 동안 자이로 Y +, 가속도 각 변화 27.3° ↔ 자이로 적분 27.0°. 10-17과 부호가 둘 다 반대 → **`pitch = −atan2(ax, az)`, `pitch_rate = +gy`로 시뮬레이션 식과 같음** (`hardware.md` §4, §5-6). 남음: 직립 −2.7° 원인(손 자세/장착 오프셋), 자이로 X 잔차 −0.9 dps → `imu cal` 다시
 - 회고: [retros/2026-11-17_session10_hw-wiring-verify.md](retros/2026-11-17_session10_hw-wiring-verify.md)
+
+### 2026-11-22 — 안전 펌웨어, VM·치수 실측, 보드 전원 VEXT로 이전 (Issue #9, 세션 11)
+
+- Issue #9 본문의 pitch 식을 세션 10 결과(`−atan2(ax, az)`, `+gy`)로 고침
+- **안전 펌웨어** (`firmware/projects/motor`): duty 상한 `HW_MOTOR_DUTY_MAX` 100 → **60 %** (12 V 스톨 ≥1.6 A, TB6612 지속 1.2 A → 1.2/1.6 ≈ 75 %인데 하한이라 여유), `motor max n`. 새 ap 모듈 `safety`(스레드 우선순위 4): 10 ms마다 `pitch = −atan2(ax, az)`, |pitch| > **45°** 3번 연속(30 ms) 또는 IMU 10번 연속 실패면 모터 정지·잠금, `safety info|reset|on|off`. `imu.c` raw 버퍼에 뮤텍스. 기준값은 사용자가 고름 (원본 펌웨어 0.79 rad와 같음, 시뮬레이션 종료는 30°)
+- 시험: 부팅 때 누워 있으면 95°로 잠기고 `motor a 30` 거부. 두 모터 30 % 구동 중 앞으로 **+45.8°**, 뒤로 **−46.4°**에서 정지. 앞으로 기울면 + (시뮬레이션 부호와 같음)
+- **VM**: 정지 배터리 11.733 V / VM 11.714 V, 60 % 두 모터 무부하 VM 11.674 V → STELA DC-DC가 배터리 전압을 거의 그대로 넘김, **VM ≈ 배터리**. 60 % 무부하 약 10.8 rad/s (A·B 차 0.3 %)
+- **치수(자)**: 바퀴 바깥 끝 사이 285 mm, 바퀴 폭 40 mm → **트랙 폭 245 mm**, **바퀴 지름 75 mm** (사양 80 mm보다 6 % 작음, 반지름 0.0375 m). 사진 `images/*_261122.jpg`
+- **보드 전원 입력 (회로도 시트 3)**: USB VBUS와 VEXT는 쇼트키(D2, D1) OR라 역류 없음. 그런데 그동안 5 V를 넣던 **VBAT는 BQ25186(1셀 충전 IC)의 배터리 핀** — USB·J-Link 연결 시 4.984 V (D4 ESD9B5.0 5.0 V 바로 아래). 사용자가 **STELA 5 V를 VEXT로 옮김** → 5 V만으로 부팅 OK, USB 연결 시 VBAT 4.097 V(충전 IC 출력), 모터 구동 중 리셋 없음
+- `hardware.md` §1·§2·§3·§5-2·§5-4·§5-5 갱신, Issue #9 코멘트 2개 + 체크리스트. 배선도 `wire_261117.png`는 아직 VBAT로 그려져 있음
+- 회고: [retros/2026-11-22_session11_hw-safety-power.md](retros/2026-11-22_session11_hw-safety-power.md)
