@@ -6,7 +6,7 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 ## 지금 상태
 
 - 현재 Part: **1 (CAD → MuJoCo 시뮬레이터)**, Issue #2 · **HW 브링업 #9는 안전 펌웨어(duty 60 %, 45° 정지), 보드 전원 VEXT 이전, 트랙 폭·바퀴 지름까지 완료**
-- 다음 할 일: Part 1 PID 외란 테스트와 실험 A~E ([experiments.md](experiments.md)), `rl-notes.md` 남은 질문 → Issue #2 닫기. HW(#9)는 질량·무게중심(저울 필요)만 남음 (회고 11 §4)
+- 다음 할 일: `rl-notes.md` Part 1 답 쓰기 (힌트는 회고 12 §4), 실험 해석 초안 검토 → Issue #2 닫기. HW(#9)는 질량·무게중심(저울 필요)만 남음 (회고 11 §4)
 - 팀 일정: 10/14 오프라인 모임(모터 도착, 부품 확인, HW 담당과 기구 정보 논의) · **11/25 최종 발표**
 
 ## 결정 사항
@@ -29,6 +29,7 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 | 2026-10-06 | 전용 PCB 보류 | PCB 제작 지원은 1등 팀만 |
 | 2026-10-12 | 엔코더는 P2 폴링(100 µs 타이머, ×4)으로 시작, 최종 핀은 2번째 엔코더 때 | P2는 GPIO 인터럽트 불가 (`gpio2`에 `gpiote-instance` 없음 → -ENOTSUP). P1에는 자유 핀이 거의 없음 |
 | 2026-10-12 | 펌웨어 플래시는 J-Link(`DISABLE_SWD` ON)로 | 온보드 DAP(pyOCD)는 이 보드에서 `No ACK`로 안 붙었음 (원인 미확정) |
+| 2026-11-22 | Docker 이미지는 BuildKit(`docker buildx build --load`)으로 빌드 | 레거시 빌더는 `TARGETARCH`가 비고, webtop의 VOLUME `/config`에 RUN으로 쓴 파일을 버려서 62/80단계에서 실패 (회고 12) |
 | 2026-10-06 | 블로그 초안(`blog/`)은 git에 넣지 않음 (`.gitignore`, 기존 Part 초안도 추적 해제) | 블로그 내용은 외부 블로그에만 둠. README에는 게시 URL만 링크 |
 
 ## 기록
@@ -172,3 +173,14 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 - **보드 전원 입력 (회로도 시트 3)**: USB VBUS와 VEXT는 쇼트키(D2, D1) OR라 역류 없음. 그런데 그동안 5 V를 넣던 **VBAT는 BQ25186(1셀 충전 IC)의 배터리 핀** — USB·J-Link 연결 시 4.984 V (D4 ESD9B5.0 5.0 V 바로 아래). 사용자가 **STELA 5 V를 VEXT로 옮김** → 5 V만으로 부팅 OK, USB 연결 시 VBAT 4.097 V(충전 IC 출력), 모터 구동 중 리셋 없음
 - `hardware.md` §1·§2·§3·§5-2·§5-4·§5-5 갱신, Issue #9 코멘트 2개 + 체크리스트. 배선도 `wire_261117.png`는 아직 VBAT로 그려져 있음
 - 회고: [retros/2026-11-22_session11_hw-safety-power.md](retros/2026-11-22_session11_hw-safety-power.md)
+
+### 2026-11-22 — Part 1 PID 외란 실험 A~E (Issue #2, 세션 12)
+
+- `rl-robotics` 이미지가 없어져 있었음, 루트 디스크 여유 11 GB. 캐시(약 9 GB)·Downloads 설치 파일(5.3 GB) 삭제, `build_qemu`·`linux-rpi`·`linux-stable`을 `/mnt/shared/projects`로 옮기고 심볼릭 링크 → 30 GB
+- 빌드: 레거시 빌더(buildx 없음)로 두 번 실패 (`TARGETARCH` 빈 값, VOLUME `/config` 쓰기 소실) → 사용자가 `docker-buildx` 0.30.1 설치 → 성공(19.7 GB). 빌드 직후 BuildKit 캐시 15 GB로 루트 24 MB까지 떨어짐 → `docker builder prune -af`, 여유 9.4 GB
+- 노트북 복사본에 키 반복 입력 무시(`KEY_DEBOUNCE` 0.3 s) 추가: WebTop에서 키 하나가 여러 번 들어가 힘이 저절로 바뀌었음
+- **기준(ALPHA 0.99, KP 7, KD 0.5)은 0.05 N(0.1초)에도 굴러가다 넘어짐** (예측 1~3 N). 굴러갈 때 `pitch (filtered)` ≈ 0인데 실제로는 기울어 있음
+- A KD = 0: 0.05 N은 버팀, 30초 넘으면 넘어짐 · B KP = 20: 외란 없이 넘어짐 · C KP = 2: 서 있음, 0.05 N에 대개 넘어짐 · D ALPHA = 0.5: 바로 넘어짐 · **E 진짜 pitch: 넘어지지 않음, 세게 밀면 일정 속도로 계속 굴러감**
+- 해석·정리는 사용자 요청으로 Claude가 초안을 씀 (표시해 둠, 사용자 검토 필요). `rl-notes.md`는 손대지 않음. 질문별 힌트(MJCF 줄 번호)는 회고 12 §4
+- 사용자 질문 "왜 내 로봇이 아니라 Bala2로?" → 10/4 결정(개념 먼저, 모델링 오차와 분리) 설명. 숫자(0.05 N, 게인)는 내 로봇에 옮겨지지 않고 개념(추정 오차, 가속도계에 섞이는 바퀴 가속, PD에 위치·속도 없음)이 옮겨짐
+- 회고: [retros/2026-11-22_session12_part1-pid-experiments.md](retros/2026-11-22_session12_part1-pid-experiments.md)
