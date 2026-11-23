@@ -60,6 +60,24 @@
 - 시뮬레이션에서는 잘 되는데 실제로는 안 되는 이유를 하나 찾아서 고친 과정은?
   - 답:
 
+### 관측 분석 (세션 15) — 원본 `balance_bot.ino` ↔ 시뮬레이션 `_get_obs()` ↔ 우리 로봇
+
+비교할 파일: `workspace/software/03-sim-to-real/balance_bot/balance_bot.ino`, `workspace/nu54/02-balance-bot-with-ppo/balance_bot_env.py`(137줄 `_get_obs()`)
+
+- Q1. 원본은 `accel.y`(앞), `accel.z`(위), `-gyro.x`를 씁니다. 우리 MPU-6050에서는 어느 축과 부호가 여기에 해당하나? (근거: `hardware.md` §5-6 재측정 2026-11-17)
+  - 답: accel.ly는 accel_x , accel.z는 accel.z, sensor_imu_gyro
+- Q2. 바퀴 속도는 5 ms 동안의 틱 차이로 계산합니다. 우리 엔코더(1496틱/회전, 원본은 420)로 바퀴가 1 rad/s로 돌면 5 ms에 몇 틱이 들어오나? 틱 1개 차이는 몇 rad/s인가? 이 양자화가 관측에 어떤 영향을 줄까?
+  - 답: 잘모르겠습니다. 
+- Q3. 시뮬레이션의 `wheel_vel_left`는 어느 바퀴인가? 실물에서 모터 A와 B 중 어느 쪽이 왼쪽인가? (`nu54.xml` 바퀴 body 위치, +X = 왼쪽, 실물은 배터리 커넥터 쪽이 앞)
+  - 답: left는 A, right은 B 
+- Q4. 원본은 `while (micros() ...)`로 루프를 5 ms에 맞춥니다. 추론이 5 ms보다 오래 걸리면 관측의 어떤 값이 학습 때와 달라지나? (상보필터 식에서 `TIMESTEP`이 곱해지는 곳)
+  - 답: 모르겠습니다.
+- Q5 (RUN 1·2 뒤). 실물에서 로봇이 덜덜 떨렸다. 시뮬레이션에서는 보지 못한 행동이다. 원인 후보를 적고, 각 후보를 **어떤 시험으로 가를 수 있는지** 적어 보자. (기록: `workspace/nu54/03-sim-to-real/results/`, `experiments.md` Part 3)
+  - 생각할 거리: 시뮬레이션 `_get_obs()`의 바퀴 속도와 실물 바퀴 속도는 값의 모양이 같은가? (DRY 시험 2와 RUN 기록의 `vel_l`·`vel_r` 열)
+  - 생각할 거리: 정책은 관측이 조금 바뀔 때 행동이 얼마나 바뀌나? (DRY 시험 2에서 바퀴만 돌렸을 때의 `act`)
+  - 생각할 거리: 1단계가 2단계보다 더 떨린 것은 어떤 후보를 지지하나?
+  - 답:
+
 ## Part 4 — Domain Randomization
 
 - 어떤 물리 파라미터를 무작위로 바꿨고, 범위는 어떻게 정했나?

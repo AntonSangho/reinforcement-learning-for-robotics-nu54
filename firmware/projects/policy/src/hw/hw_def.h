@@ -1,0 +1,85 @@
+#ifndef HW_DEF_H_
+#define HW_DEF_H_
+
+
+#include "bsp.h"
+
+
+#define _DEF_FIRMWATRE_VERSION      "V261123R1"
+#define _DEF_BOARD_NAME             "NU54-DK-POLICY"
+
+
+
+#define _HW_DEF_RTOS_THREAD_PRI_CLI           5
+#define _HW_DEF_RTOS_THREAD_MEM_CLI           (4*1024)
+#define _HW_DEF_RTOS_THREAD_PRI_SAFETY        4       // cli 보다 높게 : motor x duty ms 로 cli 가 잠들어도 돈다
+#define _HW_DEF_RTOS_THREAD_MEM_SAFETY        (2*1024)
+#define _HW_DEF_RTOS_THREAD_PRI_POLICY        3       // 5 ms 제어 루프 : safety·cli 보다 높게
+#define _HW_DEF_RTOS_THREAD_MEM_POLICY        (3*1024)
+
+
+#define _USE_HW_RTOS
+
+
+// LED4(P1.14) 핀은 모터 PWM 이 쓰므로 led 모듈을 넣지 않는다.
+
+/* 하드웨어 채널은 VCOM1(uart20), VCOM0(uart30). 이후 가상 채널(BLE 등)은 uart_driver_t 를 등록해 붙인다.
+ * 채널 번호는 기능을 켜고 끄는 것과 상관없이 고정한다 (docs/05_uart.md 채널 표). */
+#define _USE_HW_UART
+#define      HW_UART_CH_LOG         _DEF_UART1        // uart20 (VCOM1)
+#define      HW_UART_CH_CLI         HW_UART_CH_LOG
+#define      HW_UART_MAX_CH         1
+
+#define _USE_HW_LOG
+#define      HW_LOG_CH              HW_UART_CH_LOG
+#define      HW_LOG_BOOT_BUF_MAX    2048
+#define      HW_LOG_LIST_BUF_MAX    4096
+
+#define _USE_HW_NVS                           // Settings + ZMS (storage_partition)
+
+#define _USE_HW_I2C
+#define      HW_I2C_MAX_CH          1                 // _DEF_I2C1 : i2c21 (Qwiic J5, PMIC)
+
+#define _USE_HW_IMU                           // MPU-6050 (0x68), i2c 채널은 imu.c 에서 지정
+
+#define _USE_HW_ENC
+#define      HW_ENC_MAX_CH          2                 // 모터 A (P2.04/P2.05), 모터 B (P2.06/P2.07), 둘 다 x4
+
+#define _USE_HW_MOTOR
+#define      HW_MOTOR_MAX_CH        2                 // A : 왼쪽, B : 오른쪽
+#define      HW_MOTOR_DUTY_MAX      60                // % 12 V 스톨 >=1.6 A 를 TB6612 지속 1.2 A 아래로 (2026-11-22)
+
+#define _USE_HW_BUTTON
+#define      HW_BUTTON_MAX_CH       BUTTON_PIN_MAX
+
+#define _USE_HW_CLI
+#define      HW_CLI_CMD_LIST_MAX    32
+#define      HW_CLI_CMD_NAME_MAX    16
+#define      HW_CLI_LINE_HIS_MAX    8
+#define      HW_CLI_LINE_BUF_MAX    64
+
+//-- CLI
+//
+#define _USE_CLI_HW_UART            1
+#define _USE_CLI_HW_LOG             1
+#define _USE_CLI_HW_BUTTON          1
+#define _USE_CLI_HW_I2C             1
+#define _USE_CLI_HW_MOTOR           1
+#define _USE_CLI_HW_ENC             1
+#define _USE_CLI_HW_IMU             1
+#define _USE_CLI_HW_NVS             1
+
+
+// 보드 스위치 SW1~SW4 (DTS button0~button3)
+//
+typedef enum
+{
+  BTN1,
+  BTN2,
+  BTN3,
+  BTN4,
+  BUTTON_PIN_MAX,
+} ButtonPinName_t;
+
+
+#endif

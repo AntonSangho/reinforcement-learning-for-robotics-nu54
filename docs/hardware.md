@@ -168,6 +168,7 @@ FreeCAD 모델 (`build_nu54_model.py`): [등각](images/nu54_freecad_iso.png) ·
 - [ ] 제어 주기 5 ms (`TIMESTEP = 0.005`, MJCF timestep과 같게)
 - [ ] 엔코더 틱 → rad 변환 (`ENC_TICKS_PER_REV`)
 - [ ] 모터·엔코더 방향 부호 (`MOTOR_DIR_*`, `ENC_DIR_*`)
+  - 실측 (2026-11-23, 세션 15, 앞 = 배터리 커넥터 쪽, 뒤에서 봄): **모터 A = 왼쪽 바퀴, 모터 B = 오른쪽 바퀴**. 둘 다 + duty에 로봇이 앞으로 가는 방향으로 돌고 엔코더 count도 + (30 % 2초: A +2521 / B +2339, +2547틱). 시뮬레이션 `wheel_left`는 `nu54.xml`에서 `pos="0 0.1225 0"`(MuJoCo +Y)
 - [ ] 넘어짐 판정 각도와 재시작 조건
 
 ## 5. 주의 사항

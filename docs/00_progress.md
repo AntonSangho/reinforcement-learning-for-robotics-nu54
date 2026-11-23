@@ -5,9 +5,9 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 
 ## 지금 상태
 
-- 현재 Part: **2.5 (내 섀시 모델링, CAD → MJCF)**, Issue #4 · Part 1(#2)은 `rl-notes.md` 답만 남음 · **HW 브링업 #9는 안전 펌웨어(duty 60 %, 45° 정지), 보드 전원 VEXT 이전, 트랙 폭·바퀴 지름까지 완료**
+- 현재 Part: **3 (Sim → Real)**, Issue #5. **세션 15에 2단계 정책으로 손을 떼고 10\~20초 섬** (바퀴 속도 20 ms 평균, USB 선 연결). Part 2.5(#4)는 해석만 남음 · Part 1(#2)은 `rl-notes.md` 답만 남음 · **HW 브링업 #9는 안전 펌웨어(duty 60 %, 45° 정지), 보드 전원 VEXT 이전, 트랙 폭·바퀴 지름까지 완료**
 - **내 모델 PPO 학습 완료** (세션 14): 1·2단계 모두 50초 버팀, `actor.onnx`는 `workspace/nu54/02-balance-bot-with-ppo/results/phase2/`. 해석(`experiments.md` Part 2.5)과 `rl-notes` 답은 남음
-- 다음 할 일: Part 3(#5) — `onnx_actor_to_c.py`로 `actor.h` → 펌웨어 `policy` 모듈(200 Hz)로 실물 시험. 2단계 정책은 평균 행동의 97 %가 시뮬레이션 데드존 0.12보다 작음 → 1단계 정책도 같이 `actor.h`로 준비해 비교 (회고 14 §4). 발표까지의 범위는 회고 13 §4
+- 다음 할 일: Part 3(#5) — 버튼 시작 펌웨어(빌드만, 미플래시)를 올리고 외부 버튼을 달아 USB 없이 시험·영상, `rl-notes` Q1·Q2·Q4·Q5와 `experiments.md` Part 3 해석 (회고 15 §5)
 - 팀 일정: 10/14 오프라인 모임(모터 도착, 부품 확인, HW 담당과 기구 정보 논의) · **11/25 최종 발표**
 
 ## 결정 사항
@@ -34,6 +34,7 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 | 2026-11-23 | Part 2(Bala2로 PPO 학습)는 건너뛰고 Part 2.5 내 섀시 모델링부터 | Bala2 학습은 영상으로 확인했고, 11/25 발표 전에 내 로봇 모델이 더 중요. 학습은 내 MJCF로 처음 돌린다 |
 | 2026-11-23 | 섀시 모델링은 내가 FreeCAD로 함 (HW 담당의 Blender 파일은 쓰지 않음) | 튜토리얼의 `mesh_export.py`·`inertia_utils.py` 흐름을 그대로 따라 익히기 위해 |
 | 2026-10-06 | 블로그 초안(`blog/`)은 git에 넣지 않음 (`.gitignore`, 기존 Part 초안도 추적 해제) | 블로그 내용은 외부 블로그에만 둠. README에는 게시 URL만 링크 |
+| 2026-11-23 | 실물 정책의 바퀴 속도 관측은 최근 20 ms(4주기) 틱 합으로 (`policy vel avg 4`, 기본값) | 5 ms 틱 차이는 틱 1개 = 0.84 rad/s 계단이라 정책 출력이 튀어 떨림 (세션 15 시험 A·B·C2) |
 
 ## 기록
 
@@ -216,3 +217,19 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 - `runs/`는 gitignore라 CSV·best model·`actor.onnx`(+`.data`)를 `workspace/nu54/02-balance-bot-with-ppo/results/phase1·phase2/`로 복사 (216 KB). TensorBoard 스크린샷 `images/part2-nu54-phase1*-{charts,losses}.png`
 - `experiments.md` Part 2.5에 결과만 기록, 해석 칸은 비어 있음. Issue #4 재학습 항목 체크 + 코멘트
 - 회고: [retros/2026-11-23_session14_nu54-ppo.md](retros/2026-11-23_session14_nu54-ppo.md)
+
+### 2026-11-23 — Part 3 실물 배포: 정책 추론, 떨림 가설, 첫 자립 (Issue #5, 세션 15)
+
+- 예측: 2단계 정책을 그대로 올리면 "흔들리다 넘어짐", 1단계보다 2단계가 더 잘 섬 (`experiments.md` Part 3)
+- 관측 분석 질문 Q1\~Q4를 `rl-notes.md`에 추가. 사용자 답은 Q3(A = 왼쪽)만 확정, Q1 절반, Q2·Q4 모름
+- **실물 확인: 모터 A = 왼쪽, B = 오른쪽, 둘 다 + duty = 앞으로, 엔코더도 +** (`hardware.md` §4). 도중에 엔코더 파란 선(3.3 V) 빠짐, IMU 선 흔들림 → safety `trip imu` (리셋으로 재초기화)
+- 1단계 `actor.onnx`를 best model에서 다시 내보내고 두 단계 `actor.h` 생성 (MLP 4-16-16-2)
+- 펌웨어 `firmware/projects/policy` (motor 복사): `policy` 모듈 5 ms 루프(우선순위 3), 상보필터 α 0.99, ctrl ±1 = duty ±60 % (0.1 % 단위 `motorSetX10`), `CONFIG_FPU` 켬. CLI `policy info|test|sel|dry|start|stop|watch|vel|dump`
+- `policy test`: ONNX와 오차 5e-6, 추론 약 110 µs (`-Og`). DRY: overrun 0, 한 step 처리 최대 0.7 ms (대부분 I2C)
+- DRY로 §4 체크 자료: 앞으로 기울이면 pitch·rate +, 바퀴를 앞으로 돌리면 vel +, 반 바퀴 약 800틱. 체크 표시는 사용자
+- **RUN (손으로 잡음)**: 2단계·1단계 모두 덜덜 떨림, 1단계가 더 심하고 뒤로 3.4° 기운 채
+- **떨림 가설 (사용자)**: 틱 1개 = 0.84 rad/s라 바퀴 속도 관측이 0과 0.84 사이를 튐 → 출력이 튀고 바퀴가 돌았다 멈췄다. 시험 A(20 ms 평균) \|Δduty\| 25.0 → 1.1 %p, B(0 고정) 0.3 %p, 둘 다 떨림 사라짐 (잡은 채라 duty가 데드존 아래)
+- **손 떼기 (2단계 + avg 4)**: 뒤의 물체에 부딪힌 1회 뒤 넓은 곳에서 **10초, 20초 섬** (USB 선 연결). 손을 떼면 뒤로 약 −6 rad/s 달린 뒤 떨면서 섬, 좌우 duty가 자주 반대 부호
+- 버튼(SW1) 시작·정지, 60초 RAM 기록 `policy dump`, 기본값 avg 4 펌웨어를 **빌드만 하고 플래시 못 함** (J-Link 케이블 분리). 사용자는 외부 버튼을 달아 다음에 시험
+- 기록: `workspace/nu54/03-sim-to-real/results/` (RUN 1·2, A, B, C, C2, V)
+- 회고: [retros/2026-11-23_session15_part3-sim-to-real.md](retros/2026-11-23_session15_part3-sim-to-real.md)
