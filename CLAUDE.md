@@ -28,6 +28,9 @@ Shawn Hymel의 RL for Robotics 튜토리얼(Part 1~6)을 NU54-DK(nRF54L15)와 �
 
 - 원본 폴더(`workspace/software/0N-*`, `workspace/mechanical/`, `Dockerfile.*`, `scripts/`)는 **수정하지 않는다** (upstream merge 용이). 고칠 때는 `workspace/nu54/`로 복사해서 고친다
 - 내 섀시 모델·학습 코드: `workspace/nu54/` · 펌웨어: `firmware/` (HW 브링업 #9부터)
+- 내 로봇 모델: `workspace/nu54/FreeCAD/scripts/build_nu54_model.py`(치수 상수) → `nu54/nu54.FCStd`·`meshes/` → `nu54/nu54.xml`. 값의 근거는 `hardware.md` §2. FreeCAD 좌표는 Bala2와 같이 +X 왼쪽 / **−Y 앞** (export `rpy_degrees=(0,0,90)`으로 MuJoCo 앞 = +X). 섀시 관성은 `inertia_utils`가 아니라 부품별 합 (무게중심이 기하 중심과 멀면 크게 틀림)
+- FreeCAD는 `~/Applications/FreeCAD_1.1.4-*.AppImage` (`freecad`). 헤드리스는 `<AppImage> freecadcmd script.py`, 이때 `__name__`은 `'__main__'`이 아니라 파일 이름
+- 학습 노트북 복사본은 `/workspace/software`로 chdir한다 (`train()`은 `runs/`를 작업 폴더에 쓰고, TensorBoard는 `/workspace/software`만 봄)
 - 이미지: `docs/images/`, 영어 소문자·하이픈/밑줄 이름
 - 블로그 초안: `blog/drafts/` (**git에 넣지 않음**, `.gitignore`). 붙여 넣기용 `.txt`도 같이 만든다. 게시 후 URL은 README 진행표에 링크
 - 학습 노트 `docs/rl-notes.md`: **답을 대신 써 넣지 않는다.** 질문, 힌트, 실험 제안까지만 한다. 사용자 답에 대한 힌트는 회고의 다음 세션 체크리스트에 적는다
@@ -60,9 +63,12 @@ Shawn Hymel의 RL for Robotics 튜토리얼(Part 1~6)을 NU54-DK(nRF54L15)와 �
 ## 명령
 
 ```sh
-docker build -t rl-robotics -f Dockerfile.cpu .
+docker build --build-arg TARGETARCH=$(dpkg --print-architecture) -t rl-robotics -f Dockerfile.cpu .
 docker run -d --rm --name rl-robotics -e PUID=$(id -u) -e PGID=$(id -g) \
   -p 3000:3000 -p 6006:6006 -v "${PWD}/workspace:/workspace" --shm-size=2g rl-robotics
 docker stop rl-robotics   # 끝낼 때 (--rm이라 컨테이너도 지워짐)
 # WebTop http://localhost:3000 · TensorBoard http://localhost:6006
 ```
+
+- `docker run`은 **저장소 루트에서** (`${PWD}`). 홈에서 띄우면 root 소유 빈 `~/workspace`가 마운트된다 (세션 13). 확인: `docker inspect rl-robotics --format '{{range .Mounts}}{{.Source}}{{end}}'`
+- 시뮬레이션 확인 스크립트는 `docker exec rl-robotics /opt/rl-env/bin/python ...`로 돌린다 (호스트에는 mujoco 없음)

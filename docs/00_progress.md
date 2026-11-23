@@ -5,8 +5,8 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 
 ## 지금 상태
 
-- 현재 Part: **1 (CAD → MuJoCo 시뮬레이터)**, Issue #2 · **HW 브링업 #9는 안전 펌웨어(duty 60 %, 45° 정지), 보드 전원 VEXT 이전, 트랙 폭·바퀴 지름까지 완료**
-- 다음 할 일: `rl-notes.md` Part 1 답 쓰기 (힌트는 회고 12 §4), 실험 해석 초안 검토 → Issue #2 닫기. HW(#9)는 질량·무게중심(저울 필요)만 남음 (회고 11 §4)
+- 현재 Part: **2.5 (내 섀시 모델링, CAD → MJCF)**, Issue #4 · Part 1(#2)은 `rl-notes.md` 답만 남음 · **HW 브링업 #9는 안전 펌웨어(duty 60 %, 45° 정지), 보드 전원 VEXT 이전, 트랙 폭·바퀴 지름까지 완료**
+- 다음 할 일: 내 모델 PPO 학습(`workspace/nu54/02-balance-bot-with-ppo/train_with_ppo_curriculum_nu54.ipynb`, 약 40분) → ONNX → Part 3 펌웨어 `policy` 모듈(200 Hz)로 실물 시험. 발표까지의 범위는 회고 13 §4
 - 팀 일정: 10/14 오프라인 모임(모터 도착, 부품 확인, HW 담당과 기구 정보 논의) · **11/25 최종 발표**
 
 ## 결정 사항
@@ -30,6 +30,8 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 | 2026-10-12 | 엔코더는 P2 폴링(100 µs 타이머, ×4)으로 시작, 최종 핀은 2번째 엔코더 때 | P2는 GPIO 인터럽트 불가 (`gpio2`에 `gpiote-instance` 없음 → -ENOTSUP). P1에는 자유 핀이 거의 없음 |
 | 2026-10-12 | 펌웨어 플래시는 J-Link(`DISABLE_SWD` ON)로 | 온보드 DAP(pyOCD)는 이 보드에서 `No ACK`로 안 붙었음 (원인 미확정) |
 | 2026-11-22 | Docker 이미지는 BuildKit(`docker buildx build --load`)으로 빌드 | 레거시 빌더는 `TARGETARCH`가 비고, webtop의 VOLUME `/config`에 RUN으로 쓴 파일을 버려서 62/80단계에서 실패 (회고 12) |
+| 2026-11-23 | Part 2(Bala2로 PPO 학습)는 건너뛰고 Part 2.5 내 섀시 모델링부터 | Bala2 학습은 영상으로 확인했고, 11/25 발표 전에 내 로봇 모델이 더 중요. 학습은 내 MJCF로 처음 돌린다 |
+| 2026-11-23 | 섀시 모델링은 내가 FreeCAD로 함 (HW 담당의 Blender 파일은 쓰지 않음) | 튜토리얼의 `mesh_export.py`·`inertia_utils.py` 흐름을 그대로 따라 익히기 위해 |
 | 2026-10-06 | 블로그 초안(`blog/`)은 git에 넣지 않음 (`.gitignore`, 기존 Part 초안도 추적 해제) | 블로그 내용은 외부 블로그에만 둠. README에는 게시 URL만 링크 |
 
 ## 기록
@@ -184,3 +186,18 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 - 해석·정리는 사용자 요청으로 Claude가 초안을 씀 (표시해 둠, 사용자 검토 필요). `rl-notes.md`는 손대지 않음. 질문별 힌트(MJCF 줄 번호)는 회고 12 §4
 - 사용자 질문 "왜 내 로봇이 아니라 Bala2로?" → 10/4 결정(개념 먼저, 모델링 오차와 분리) 설명. 숫자(0.05 N, 게인)는 내 로봇에 옮겨지지 않고 개념(추정 오차, 가속도계에 섞이는 바퀴 가속, PD에 위치·속도 없음)이 옮겨짐
 - 회고: [retros/2026-11-22_session12_part1-pid-experiments.md](retros/2026-11-22_session12_part1-pid-experiments.md)
+
+### 2026-11-23 — 내 섀시 모델링: 치수 → FreeCAD → MJCF → PPO 준비 (Issue #4, 세션 13)
+
+- 결정: Part 2(Bala2 PPO)는 건너뛰고 Part 2.5부터, 모델링은 FreeCAD로 직접 (결정 사항 표). #3에 코멘트
+- FreeCAD 1.1.4 AppImage를 이 데스크톱에 설치 (`~/Applications`, `freecad` 링크). `freecadcmd`로 Bala2 바퀴 관성이 MJCF 값과 같게 나오는지 확인
+- 섀시 치수 실측 (자, 원점 = 바퀴 축 중심) → `hardware.md` §2-1. IMU 칩 (앞 45, 왼쪽 4.5, 위 37.5) mm, 보드 축 = 몸체 축
+- `workspace/nu54/FreeCAD/scripts/build_nu54_model.py`로 상자·원기둥 모델 생성 → `nu54/nu54.FCStd`. 좌표는 Bala2와 같은 +X 왼쪽 / **−Y 앞**. 섀시는 고체 하나여야 함(Compound면 무게중심·관성 없음). 사용자가 GUI로 사진과 대조
+- `mesh_export`로 STL 3개 (`rpy_degrees=(0,0,90)`)
+- 질량(저울 없음): 모터 사양표(JGA25-370-1260, 105 g, 스톨 0.275 N·m) + 부피×밀도 → 섀시 917 g, 바퀴 45 g. 칼날 무게중심 30 mm(바퀴 포함) → 섀시 33 mm. **`inertia_utils`는 기하 중심(71.6 mm)에서 평행이동만 해서 pitch 관성을 1.8배 크게 잡음 → 부품별 합 사용** (사용자 결정). `hardware.md` §2-2
+- `nu54/nu54.xml`: gear 0.165(ctrl 1 = duty 60 %), damping 0.0134(역기전력, 최고 속도 실측 10.8 rad/s에 맞춤), frictionloss 0.02(데드존), armature 5.8e-4(추정). MuJoCo에서 무게중심 30 mm, ctrl 1 → 10.82 rad/s 확인
+- `test_motion_nu54` 손 조종: 사용자는 Bala2보다 어렵다고 느꼈지만 시뮬레이션으로는 3배 느리게 넘어짐(ctrl 0.2에서 0.45 s 대 0.15 s). 첫 키 0.1이 데드존 안이고 디바운스가 없어서로 추정
+- PPO 준비: `workspace/nu54/02-balance-bot-with-ppo/` (env는 카메라만 바꿈, 노트북은 `/workspace/software`로 chdir해 TensorBoard에 보이게). 스모크 학습 정상, 약 1700 steps/s → 전체 약 40분
+- 컨테이너가 홈 폴더에서 떠서 `~/workspace`(root 소유 빈 폴더)를 마운트하고 있었음 → 저장소에서 다시 띄움. `~/workspace` 삭제는 앱 터미널에서 sudo가 막혀 남아 있음
+- 영상 스크립트 `docs/youtube/` 추가 (Part 1\~6). Part 3은 영상도 첫 배포가 실패하고 펌웨어 보정 4개로 섰음 → 우리는 그중 모터 부스트·데드밴드를 모델에 미리 넣음 (회고 13 §4)
+- 회고: [retros/2026-11-23_session13_nu54-model.md](retros/2026-11-23_session13_nu54-model.md)

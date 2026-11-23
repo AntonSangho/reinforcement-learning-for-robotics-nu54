@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- MJCF -->
+<!-- MuJoCo Format: XML for describing physical components of the robot and how
+     they fit together. Reference: 
+     https://mujoco.readthedocs.io/en/stable/XMLreference.html -->
+
+<!-- NU54 self-balancing robot. Copied from
+     workspace/mechanical/FreeCAD/bala2-fire/bala2-fire-simplified.xml and
+     changed for the NU54 chassis (meshes from build_nu54_model.py).
+     Values and how they were estimated: docs/hardware.md section 2. -->
+<mujoco model="nu54">
+
+  <!-- ===================================================================== -->
+  <!-- Settings -->
+
+  <!-- Sets options for parser and compiler:
+       angle: "degree" (MJCF default) or "radian"
+       coordinate: positions/orientations expressed in "local" or "global" frame
+       meshdir: absolute or relative path to STL files
+       autolimits: automatically set limited="true" if range attribute given -->
+  <compiler angle="radian"
+            coordinate="local"
+            meshdir="meshes"
+            autolimits="true"/>
+
+  <!-- Sets options for physics simulation:
+       timestep: time between measurement/control steps in simulator
+       gravity: gravitational acceleration vector
+       integrator: algorithm used to compute positions/velocities -->
+  <option timestep="0.005"
+          gravity="0 0 -9.81"
+          integrator="implicitfast"/>
+
+  <!-- Specifies default values for various attributes -->
+  <default>
+    <!-- Geometry defaults: solid surfaces with reasonable friction
+         contype: bit mask of which collision group the geom belongs to
+         conaffinity: bit mask of which group this geom can collide with
+         friction: coefficients (sliding, torsional, rolling)
+
+         Note: contact friction between two geoms is the max of either
+         geom friction values. 0.8 is an estimate for rubber on a floor/desk -->
+    <geom contype="1" 
+          conaffinity="1" 
+          friction="0.8 0.005 0.0001"/>
+  </default>
+
+  <!-- ===================================================================== -->
+  <!-- Assets: meshes and visual textures -->
+
+  <!-- Define assets to use when building the world -->
+  <asset>
+    <!-- Define mesh, file location, and scale (convert to meters) -->
+    <mesh name="chassis_mesh"
+          file="chassis.stl"
+          scale="0.001 0.001 0.001"/>
+    <mesh name="wheel_left_mesh"
+          file="wheel_left.stl"
+          scale="0.001 0.001 0.001"/>
+    <mesh name="wheel_right_mesh"
+          file="wheel_right.stl"
+          scale="0.001 0.001 0.001"/>
+
+    <!-- Use simple gradient for sky texture -->
+    <texture type="skybox"
+             builtin="gradient"
+             rgb1="0.5 0.7 1"
+             rgb2="0.95 0.95 1"
+             width="256"
+             height="256"/>
+
+    <!-- Use built-in checker pattern to create grid texture -->
+    <texture name="grid"
+             type="2d"
+             builtin="checker"
+             rgb1="0.2 0.3 0.4"
+             rgb2="0.3 0.4 0.5"
+             width="512"
+             height="512"
+             mark="cross"
+             markrgb="0.8 0.8 0.8"/>
+
+    <!-- Create a grid material from the grid texture  -->
+    <material name="grid"
+              texture="grid"
+              texrepeat="5 5"
+              reflectance="0"
+              specular="0"
+              shininess="0"/>
+  </asset>
+
+  <!-- ===================================================================== -->
+  <!-- World and robot bodies -->
+
+  <!-- The world and everything in it -->
+  <worldbody>
+
+    <!-- Lighting -->
+    <light pos="0 0 1.5" 
+           dir="0 0 -1" 
+           diffuse="0.8 0.8 0.8"/>
+
+    <!-- Ground plane at z=0, grid texture. If size x or y is set to 0, the 
+         plane is infinitely wide/long with 0 size. We'll make it large but
+         finite. -->
+    <geom name="ground"
+          type="plane"
+          size="5 5 0.1"
+          material="grid"/>
+
+    <!-- Define the robot as a nested tree of bodies and joints. The origin of
+         the chassis is the center of the axles, which sits 37.5 mm above the 
+         ground (measured wheel radius, 75 mm diameter). This allows the wheels to be touching the ground
+         at the start of the episode. -->
+    <body name="chassis" pos="0 0 0.0375">
+
+      <!-- Free joint: robot can translate/orient freely in world frame -->
+      <freejoint name="root"/>
+
+      <!-- Visual and collision geometry -->
+      <geom name="chassis_geom"
+            type="mesh"
+            mesh="chassis_mesh"
+            rgba="0.76 0.60 0.42 1.0"/>
+
+      <!-- Chassis inertial properties. No scale yet, so mass is the sum of
+           estimated part masses (motor spec 105 g x2, battery, wood volume x
+           density, electronics). CoM height from knife-edge balance with wheels
+           on (30 mm), wheels removed by calculation -> 33 mm.
+           Inertia is the sum of per-part boxes/cylinders about that CoM, NOT
+           inertia_utils output: inertia_utils assumes uniform density and only
+           shifts the reference point from the geometric centre (71.6 mm) to the
+           measured CoM, which overestimates pitch inertia ~1.8x here because
+           the heavy battery and motors sit at the bottom. -->
+      <inertial pos="0.000000 0.000000 0.033000" 
+                mass="0.917000" 
+                diaginertia="0.003968 0.002588 0.002378"/>
+
+      <!-- Site for IMU sensor: GY-521 chip centre measured from the axle
+           centre (front 45, left 4.5, up 37.5 mm). The board's x/y arrows point
+           front/left, so its axes match the body axes (no rotation). -->
+      <site name="imu_site"
+            type="box"
+            pos="0.045 0.0045 0.0375" 
+            size="0.003 0.003 0.00035"
+            rgba="0 0 1.0 1.0"/>
+
+      <!-- Optional visual box to show the "front" of the robot -->
+      <geom type="box"
+            size="0.001 0.02 0.01" 
+            pos="0.056 0 0.025"
+            rgba="0 1.0 0 1.0" 
+            contype="0" 
+            conaffinity="0"/>
+
+      <!-- Left wheel -->
+      <body name="wheel_left" pos="0 0.1225 0">
+
+        <!-- Joint: connect body to its parent and defines motion
+             type: free, ball, slide, hinge
+             axis: rotate around one axis for hinge type
+             damping: viscous resistance. Here it models the motor's back-EMF:
+                      a DC motor's torque falls linearly from stall torque at
+                      0 rad/s to 0 at no-load speed, so
+                      k ~ 0.275 N-m / 17.8 rad/s = 0.0154 N-m-s/rad
+                      (JGA25-370-1260 spec, 12 V). TB6612 PWM is drive/brake,
+                      so the same slope holds at any duty. Fitted to 0.0134 so
+                      that with frictionloss the top speed at ctrl = 1 matches
+                      the measured 10.8 rad/s: (0.165 - 0.02) / 10.8.
+             frictionloss: static friction. Wheels start at ~15 % duty at 6 V
+                      -> 0.15 * 0.275 N-m * 6/12 = 0.02 N-m
+             armature: motor's rotational inertia reflected through the gearbox
+                       370 motor rotor estimated 5e-7 kg-m^2 (no datasheet),
+                       x 34^2 = 5.8e-4 kg-m^2, ~18x the wheel's inertia. -->
+        <joint name="left_wheel_joint" 
+               type="hinge" 
+               axis="0 1 0"
+               damping="0.0134" 
+               frictionloss="0.02"
+               armature="5.8e-4"/>
+
+        <!-- Assign a mesh and give it a color. Use default collision and
+             friction values. -->
+        <geom name="wheel_left_geom" 
+              type="mesh" 
+              mesh="wheel_left_mesh"
+              rgba="0.1 0.1 0.1 1.0"/>
+
+        <!-- Wheel inertial properties (inertia_utils, estimated mass 45 g) -->
+        <inertial pos="0.000000 0.000000 0.000000"
+                  mass="0.045000" 
+                  diaginertia="0.000021820 0.000031641 0.000021820"/>
+      </body>
+
+      <!-- Right wheel -->
+      <body name="wheel_right" pos="0 -0.1225 0">
+        <joint name="right_wheel_joint" 
+               type="hinge" 
+               axis="0 1 0"
+               damping="0.0134" 
+               frictionloss="0.02"
+               armature="5.8e-4"/>
+        <geom name="wheel_right_geom" 
+              type="mesh" 
+              mesh="wheel_right_mesh"
+              rgba="0.1 0.1 0.1 1.0"/>
+        <inertial pos="0.000000 0.000000 0.000000" 
+                  mass="0.045000" 
+                  diaginertia="0.000021820 0.000031641 0.000021820"/>
+      </body>
+    </body>
+  </worldbody>
+
+  <!-- ===================================================================== -->
+  <!-- Actuators: motors driving the wheel joints -->
+
+  <actuator>
+
+    <!-- Left motor connected to the left wheel joint. Note that autolimits is
+         set to "true" in the compiler element, which means that ctrlrange
+         determines the limits of the actuator (i.e. ctrllimited is
+         automatically set to "true").
+
+         Control torque (for a hinge joint) is determined by gear * ctrl (units
+         of N-m). For reinforcement learning, it helps to have a normalized
+         ctrl, so we set the limits to [-1, 1].
+         NU54: ctrl = 1 means the firmware duty cap (60 %), so
+         gear = 0.6 * stall torque 0.275 N-m = 0.165 N-m. With the joint damping
+         and frictionloss above, top speed at ctrl = 1 is
+         (0.165 - 0.02) / 0.0134 = 10.8 rad/s (measured at 60 % duty, no load).
+         Wheels start to turn above ctrl = 0.02 / 0.165 = 0.12. --> 
+    <motor name="left_motor"
+           joint="left_wheel_joint" 
+           gear="0.165"
+           ctrlrange="-1 1"/>
+
+    <!-- Right motor connected to the right wheel joint -->
+    <motor name="right_motor" 
+           joint="right_wheel_joint" 
+           gear="0.165"
+           ctrlrange="-1 1"/>
+  </actuator>
+
+  <!-- ===================================================================== -->
+  <!-- Sensors: IMU and encoders -->
+
+  <!-- Define all the sensors and their locations -->
+  <sensor>
+    <!-- IMU sensors at imu_site. While our MPU6886 only provides gyro and
+         acceleration data, we can get ground-truth orientation here to help
+         us with training (even if we don't have it on the real robot). -->
+    <accelerometer name="imu_accel" site="imu_site"/>
+    <gyro name="imu_gyro" site="imu_site"/>
+    <framequat name="imu_orientation" objtype="site" objname="imu_site"/>
+
+    <!-- Wheel encoders (joint position and velocity) -->
+    <jointpos name="left_wheel_pos" joint="left_wheel_joint"/>
+    <jointpos name="right_wheel_pos" joint="right_wheel_joint"/>
+    <jointvel name="left_wheel_vel" joint="left_wheel_joint"/>
+    <jointvel name="right_wheel_vel" joint="right_wheel_joint"/>
+  </sensor>
+
+</mujoco>

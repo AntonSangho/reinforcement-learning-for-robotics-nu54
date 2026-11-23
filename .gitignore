@@ -31,3 +31,6 @@ blog/
 firmware/projects/*/build/
 firmware/projects/*/build_*/
 firmware/.tools/
+
+# YouTube transcripts (DigiKey videos, copyrighted; local reference only)
+docs/youtube/
