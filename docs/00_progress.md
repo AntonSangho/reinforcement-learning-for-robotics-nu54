@@ -6,7 +6,8 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 ## 지금 상태
 
 - 현재 Part: **2.5 (내 섀시 모델링, CAD → MJCF)**, Issue #4 · Part 1(#2)은 `rl-notes.md` 답만 남음 · **HW 브링업 #9는 안전 펌웨어(duty 60 %, 45° 정지), 보드 전원 VEXT 이전, 트랙 폭·바퀴 지름까지 완료**
-- 다음 할 일: 내 모델 PPO 학습(`workspace/nu54/02-balance-bot-with-ppo/train_with_ppo_curriculum_nu54.ipynb`, 약 40분) → ONNX → Part 3 펌웨어 `policy` 모듈(200 Hz)로 실물 시험. 발표까지의 범위는 회고 13 §4
+- **내 모델 PPO 학습 완료** (세션 14): 1·2단계 모두 50초 버팀, `actor.onnx`는 `workspace/nu54/02-balance-bot-with-ppo/results/phase2/`. 해석(`experiments.md` Part 2.5)과 `rl-notes` 답은 남음
+- 다음 할 일: Part 3(#5) — `onnx_actor_to_c.py`로 `actor.h` → 펌웨어 `policy` 모듈(200 Hz)로 실물 시험. 2단계 정책은 평균 행동의 97 %가 시뮬레이션 데드존 0.12보다 작음 → 1단계 정책도 같이 `actor.h`로 준비해 비교 (회고 14 §4). 발표까지의 범위는 회고 13 §4
 - 팀 일정: 10/14 오프라인 모임(모터 도착, 부품 확인, HW 담당과 기구 정보 논의) · **11/25 최종 발표**
 
 ## 결정 사항
@@ -201,3 +202,17 @@ Part별 상태 요약은 [README 진행표](../README.md#진행-상황)에, 세�
 - 컨테이너가 홈 폴더에서 떠서 `~/workspace`(root 소유 빈 폴더)를 마운트하고 있었음 → 저장소에서 다시 띄움. `~/workspace` 삭제는 앱 터미널에서 sudo가 막혀 남아 있음
 - 영상 스크립트 `docs/youtube/` 추가 (Part 1\~6). Part 3은 영상도 첫 배포가 실패하고 펌웨어 보정 4개로 섰음 → 우리는 그중 모터 부스트·데드밴드를 모델에 미리 넣음 (회고 13 §4)
 - 회고: [retros/2026-11-23_session13_nu54-model.md](retros/2026-11-23_session13_nu54-model.md)
+
+### 2026-11-23 — 내 섀시 모델로 PPO 커리큘럼 학습 (Issue #4, 세션 14)
+
+- 컨테이너는 이미 저장소 루트에서 떠 있었음 (마운트·PUID 확인). 예측 3개(50초, ctrl 크기와 데드존, 2단계 초반 무너짐)는 모두 "모르겠음"으로 기록
+- 첫 학습이 `PermissionError`: `workspace/software/runs/`와 `__pycache__`가 root 소유. 세션 13에서 `docker exec`(기본 root)로 스모크 학습을 돌린 탓 → `docker exec -u root ... chown 1000:1000`, CLAUDE.md 명령을 `docker exec -u abc`로
+- **1단계**(균형만): 약 19분, 30만\~70만 step에서 에피소드 길이 급상승, 70만 이후 10000(50초) 고정, best mean return 9986. 학습 끝에 `explained_variance` NaN 경고 한 번 (return 분산 ≈ 0, 기록용 값이라 학습에 영향 없음)
+- **2단계**(+ 위치 0.001, yaw 0.1): 약 19분, 처음부터 끝까지 길이 10000. return 9920 → 9950, entropy −0.31 → −3.73, 시작 때 clipfrac 0.14로 튐
+- **물리 timestep은 학습·평가 모두 5 ms** (`nu54.xml`). 노트북의 `timestep=0.005`는 실시간 표시용 sleep. 세션 중 "학습 2 ms"라고 잘못 안내했다가 정정
+- **원본 `evaluate()` 버그**: `RecordEpisodeStatistics`가 `max_steps`를 넘겨주지 않아 `num_steps` 2048(10.24초)에서 끊음 → 첫 평가 Mean return 2044. 노트북 복사본에 `num_steps=10_000` 50초 평가 셀 추가: 1단계 평균 9980, 2단계 9990
+- 행동·이동 측정 셀 추가 (평균 행동 = ONNX, 샘플 행동 = 영상): 1단계 `|ctrl|` 중앙값 0.20, 반지름 약 0.8 m 원으로 천천히(50초에 1/3바퀴). 2단계 중앙값 0.010(0.12 미만 97 %), 평균 행동이면 6 cm만 움직이고 샘플 행동이면 거의 직선으로 1 m
+- 사용자 관찰은 "1·2단계 모두 원을 그림" (처음 "직진"으로 골랐다가 정정). 숫자로는 1단계만 원
+- `runs/`는 gitignore라 CSV·best model·`actor.onnx`(+`.data`)를 `workspace/nu54/02-balance-bot-with-ppo/results/phase1·phase2/`로 복사 (216 KB). TensorBoard 스크린샷 `images/part2-nu54-phase1*-{charts,losses}.png`
+- `experiments.md` Part 2.5에 결과만 기록, 해석 칸은 비어 있음. Issue #4 재학습 항목 체크 + 코멘트
+- 회고: [retros/2026-11-23_session14_nu54-ppo.md](retros/2026-11-23_session14_nu54-ppo.md)
