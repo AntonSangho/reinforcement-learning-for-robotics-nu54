@@ -14,8 +14,10 @@
  *   pitch = -atan2(ax, az), pitch_rate = +gy  (2026-11-17)
  *   모터 A(ch0) = 왼쪽, 모터 B(ch1) = 오른쪽, + duty = 앞으로, 엔코더도 앞으로 + (2026-11-23)
  *
- * 시작 (USB 없이) : SW1 을 누르면 POLICY_BTN_DELAY_MS 뒤 |pitch| < 10° 이면 safety 를 풀고 RUN.
- *   RUN 중에 SW1 을 누르면 멈춘다. RUN 동안 50 ms 마다 RAM 에 기록 → 나중에 `policy dump`
+ * 시작 (USB 없이) : SW1 또는 외부 버튼(SW2 핀 P1.09, P4-7)을 누르면 POLICY_BTN_DELAY_MS 뒤
+ *   |pitch| < 10° 이면 safety 를 풀고 RUN. RUN 중에 누르면 멈춘다.
+ *   RUN 동안 50 ms 마다 RAM 에 기록 → 나중에 `policy dump`
+ *   상태 LED (P2.09, P2-23) : RUN 이면 켜짐, 아니면 꺼짐 (safety trip·넘어짐으로 멈춰도 꺼진다)
  *
  * 모드
  *   OFF  스레드가 잠듦
@@ -29,6 +31,7 @@
 
 #ifdef _USE_HW_MOTOR
 #include <math.h>
+#include <zephyr/drivers/gpio.h>
 #include "policy_actor.h"
 
 
@@ -41,6 +44,7 @@
 #define POLICY_VEL_AVG_MAX        20          // 바퀴 속도 평균 창 최대 (주기 수, 100 ms)
 
 #define POLICY_BTN                _DEF_BUTTON1      // SW1 (P1.13)
+#define POLICY_BTN_EXT            _DEF_BUTTON2      // 외부 버튼 (SW2 핀 P1.09, P4-7). COM = GND, NO = P1.09
 #define POLICY_BTN_DELAY_MS       2000        // 버튼을 누른 뒤 세워 잡을 시간
 #define POLICY_BTN_START_DEG      10.0f       // 시작할 때 허용하는 |pitch| (safety 가속도 각도)
 
@@ -123,6 +127,8 @@ typedef struct
 static policy_log_t log_buf[POLICY_LOG_MAX];
 static uint32_t     log_cnt   = 0;              // 지금까지 쓴 개수 (POLICY_LOG_MAX 를 넘으면 앞을 덮음)
 static uint32_t     log_start = 0;              // 기록을 시작한 step (dump 의 ms 계산)
+
+static const struct gpio_dt_spec status_led = GPIO_DT_SPEC_GET(DT_PATH(zephyr_user), status_led_gpios);
 
 static K_SEM_DEFINE(start_sem, 0, 1);
 static K_THREAD_STACK_DEFINE(btn_stack, 1024);
@@ -392,16 +398,22 @@ next_step:
 
 
 
-// SW1 : 꺼져 있으면 POLICY_BTN_DELAY_MS 뒤 시작, 돌고 있으면 정지. USB 없이 시험할 때 쓴다.
+// SW1·외부 버튼 : 꺼져 있으면 POLICY_BTN_DELAY_MS 뒤 시작, 돌고 있으면 정지. USB 없이 시험할 때 쓴다.
+// 상태 LED 도 여기서 20 ms 마다 mode 에 맞춘다 (어디서 멈췄든 따라간다).
 void policyBtnThread(void *arg1, void *arg2, void *arg3)
 {
   bool prev = false;
+  bool led_ok;
+
+  led_ok = gpio_is_ready_dt(&status_led) &&
+           gpio_pin_configure_dt(&status_led, GPIO_OUTPUT_INACTIVE) == 0;
+  logPrintf("[%s] policy status led (P2.09)\n", led_ok ? "OK" : "E_");
 
   moduleWaitReady();
 
   while (1)
   {
-    bool cur = buttonGetPressed(POLICY_BTN);
+    bool cur = buttonGetPressed(POLICY_BTN) || buttonGetPressed(POLICY_BTN_EXT);
 
     if (cur && !prev)
     {
@@ -430,6 +442,11 @@ void policyBtnThread(void *arg1, void *arg2, void *arg3)
       }
     }
     prev = cur;
+
+    if (led_ok)
+    {
+      gpio_pin_set_dt(&status_led, mode == MODE_RUN);
+    }
     k_msleep(20);
   }
 }
@@ -713,7 +730,7 @@ void cliPolicy(cli_args_t *args)
     cliPrintf("policy dry|start|stop\n");
     cliPrintf("policy watch time_ms [interval_ms]\n");
     cliPrintf("policy dump\n");
-    cliPrintf("SW1 : start (after 2 s) / stop\n");
+    cliPrintf("SW1 / ext button (P1.09) : start (after 2 s) / stop, LED (P2.09) on = run\n");
   }
 }
 

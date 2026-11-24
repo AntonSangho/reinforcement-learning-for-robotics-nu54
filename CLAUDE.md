@@ -46,6 +46,7 @@ Shawn Hymel의 RL for Robotics 튜토리얼(Part 1~6)을 NU54-DK(nRF54L15)와 �
 - **엔코더 전원은 3.3 V** (출력이 nRF54L15 핀에 바로 들어감, 5 V 입력 불가)
 - **보드 5 V는 VEXT로** (쇼트키 OR라 USB와 같이 꽂아도 됨). **VBAT는 충전 IC의 1셀 배터리 핀**이라 5 V를 넣지 않는다 (2026-11-22 이전)
 - **PWM은 P1 포트에서만** → 모터 PWM은 P1.10(P4-8) / P1.14(P4-12) (LED2/LED4 핀). P1.12(VBAT_MON, 100 nF)는 쓰지 않는다
+- 외부 버튼 P1.09(P4-7, COM → GND) = policy 시작·정지, 상태 LED P2.09(P2-23, RUN이면 켜짐, 저항 없음). 2026-11-25 빵판을 빼고 선으로 재배선
 - 헤더는 **P4(왼쪽)와 P2(오른쪽)** 두 개. 핀 위치는 `docs/images/NU54V-DK_pinoutfrom_baram.png`와 회로도 시트 9가 기준 (옛 `nu-54dk_pinmap.png`는 P4의 `1.10`이 빠져 있음). 자유 핀은 P2.00~P2.06 7개 + LED 핀(P1.10, P1.14, P2.09, P2.07) + 입력 전용 버튼 핀. 확정 핀맵: `docs/hardware.md` §3
 - **VCOM0를 쓰면 SWD가 죽는다** → CLI는 VCOM1
 
@@ -62,6 +63,7 @@ Shawn Hymel의 RL for Robotics 튜토리얼(Part 1~6)을 NU54-DK(nRF54L15)와 �
 - 정책은 `workspace/software/rl/onnx_actor_to_c.py`로 `actor.h`를 만들어 쓴다 (순수 C). 실물 정책 펌웨어는 `firmware/projects/policy` (`policy info|test|sel|dry|start|stop|watch|vel|dump`, 두 단계 `actor_phase1·2.h`). 생성기는 컨테이너에서 (`docker exec -u abc -w /workspace/software rl-robotics /opt/rl-env/bin/python rl/onnx_actor_to_c.py ...`, 호스트에는 onnx 없음)
 - **바퀴 속도 관측은 20 ms 평균(`policy vel avg 4`, 기본값)**. 5 ms 틱 차이는 틱 1개 = 0.84 rad/s 계단이라 정책이 덜덜 떤다 (세션 15)
 - **실물 RUN 절차**: 모터가 도는 명령은 사용자 "준비됨" 뒤에만, 보내기 전에 `safety info`로 |pitch| < 10° 확인 (기울어진 채 시작 요청이 잦음 → ±5° 0.6초 유지 시 자동 시작). 기록은 `policy watch 10000 50` → `workspace/nu54/03-sim-to-real/results/`. 관찰은 자유 서술을 먼저 받고 숫자 요약. 플래시 전엔 J-Link 케이블이 보드에 꽂혀 있는지 먼저 묻는다 (RUN 때 빼 둠)
+- **RUN 전 점검**: 바퀴 든 채 `motor a 30`·`motor b 30` 2초 → 틱 약 2500, 좌우 2 % 안, + duty에 앞으로 (손 회전만으로는 엔코더 오배선을 놓침, 세션 16). **USB 없이 시험할 때는 부팅 로그 `Boot count`를 전후로 비교** (USB가 VEXT 끊김을 가림. 세션 16 재부팅 원인은 STELA J2 스위치 선). 빌드는 `firmware/scripts/fw build --project projects/policy`
 - sim ↔ real 관측 일치는 `docs/hardware.md` §4 체크리스트로 확인한다
 
 ## 명령

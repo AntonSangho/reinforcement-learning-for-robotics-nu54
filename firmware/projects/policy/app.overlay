@@ -59,6 +59,8 @@
 		/* 엔코더 (모터 A) : 노랑 = P2.04 (A), 초록 = P2.05 (B). 엔코더 전원은 3.3 V */
 		enc-gpios = <&gpio2 4 GPIO_PULL_UP>, <&gpio2 5 GPIO_PULL_UP>,
 			    <&gpio2 6 GPIO_PULL_UP>, <&gpio2 7 GPIO_PULL_UP>;   /* 모터 B: 노랑 = P2.06 (A), 초록 = P2.07 (B, LED3 핀) */
+		/* 상태 LED : P2.09 (P2-23, 보드 LED1 핀). 켜짐 = policy RUN. 외부 파란 LED, 저항 없음 */
+		status-led-gpios = <&gpio2 9 GPIO_ACTIVE_HIGH>;
 		pwms = <&pwm20 0 PWM_USEC(50) PWM_POLARITY_NORMAL>,
 		       <&pwm20 1 PWM_USEC(50) PWM_POLARITY_NORMAL>;
 	};
