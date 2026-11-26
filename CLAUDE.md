@@ -60,10 +60,10 @@ Shawn Hymel의 RL for Robotics 튜토리얼(Part 1~6)을 NU54-DK(nRF54L15)와 �
 - 보드 CLI 시험은 `baram-term` 스킬(`baram-ctl`)로 보낸다. 포트를 직접 열지 않는다
 - 사용자가 손·눈으로 하는 실측(스톨 전류 등)은 이유를 먼저 설명하고, 명령을 보내기 직전에 알린다. `motor x duty ms`는 그 시간 동안 CLI를 막으므로 구동 시간 뒤에 `enc info`를 읽는다. 스톨은 전류보다 `enc` 틱으로 판단한다
 - **`safety` 모듈이 누워 있으면(|pitch| > 45°) 모터를 잠근다.** 벤치 시험은 세워 들고 `safety reset`, 또는 `safety off`(리셋하면 다시 ON). duty 상한 60 %(`motor max n`). trip 확인은 `safety info`의 `count`로 (`baram-ctl read` 버퍼에 옛 trip 줄이 남음)
-- 정책은 `workspace/software/rl/onnx_actor_to_c.py`로 `actor.h`를 만들어 쓴다 (순수 C). 실물 정책 펌웨어는 `firmware/projects/policy` (`policy info|test|sel|dry|start|stop|watch|vel|dump`, 두 단계 `actor_phase1·2.h`). 생성기는 컨테이너에서 (`docker exec -u abc -w /workspace/software rl-robotics /opt/rl-env/bin/python rl/onnx_actor_to_c.py ...`, 호스트에는 onnx 없음)
+- 정책은 `workspace/software/rl/onnx_actor_to_c.py`로 `actor.h`를 만들어 쓴다 (순수 C). 실물 정책 펌웨어는 `firmware/projects/policy` (`policy info|test|sel|dry|start|stop|watch|vel|offset|dump`, 두 단계 `actor_phase1·2.h`). **`policy offset <deg>`는 리셋하면 0** — 균형점 IMU pitch ≈ +9.5° (세션 17), RUN 전에 설정. 생성기는 컨테이너에서 (`docker exec -u abc -w /workspace/software rl-robotics /opt/rl-env/bin/python rl/onnx_actor_to_c.py ...`, 호스트에는 onnx 없음)
 - **바퀴 속도 관측은 20 ms 평균(`policy vel avg 4`, 기본값)**. 5 ms 틱 차이는 틱 1개 = 0.84 rad/s 계단이라 정책이 덜덜 떤다 (세션 15)
-- **실물 RUN 절차**: 모터가 도는 명령은 사용자 "준비됨" 뒤에만, 보내기 전에 `safety info`로 |pitch| < 10° 확인 (기울어진 채 시작 요청이 잦음 → ±5° 0.6초 유지 시 자동 시작). 기록은 `policy watch 10000 50` → `workspace/nu54/03-sim-to-real/results/`. 관찰은 자유 서술을 먼저 받고 숫자 요약. 플래시 전엔 J-Link 케이블이 보드에 꽂혀 있는지 먼저 묻는다 (RUN 때 빼 둠)
-- **RUN 전 점검**: 바퀴 든 채 `motor a 30`·`motor b 30` 2초 → 틱 약 2500, 좌우 2 % 안, + duty에 앞으로 (손 회전만으로는 엔코더 오배선을 놓침, 세션 16). **USB 없이 시험할 때는 부팅 로그 `Boot count`를 전후로 비교** (USB가 VEXT 끊김을 가림. 세션 16 재부팅 원인은 STELA J2 스위치 선). 빌드는 `firmware/scripts/fw build --project projects/policy`
+- **실물 RUN 절차**: 모터가 도는 명령은 사용자 "준비됨" 뒤에만, 보내기 전에 `safety info`로 |pitch| < 10° 확인 (기울어진 채 시작 요청이 잦음 → ±5° 0.6초 유지 시 자동 시작). 기록은 `policy watch 10000 50` 또는 USB 없이 RUN 뒤 `policy dump`(**마지막 RUN 하나만** — 정지 뒤 버튼을 더 누르지 않게 안내) → `workspace/nu54/03-sim-to-real/results/`. 관찰은 자유 서술을 먼저 받고 숫자 요약. 플래시 전엔 J-Link 케이블이 보드에 꽂혀 있는지 먼저 묻는다 (RUN 때 빼 둠)
+- **RUN 전 점검**: 바퀴 든 채 `motor a 30`·`motor b 30` 2초 → 틱 약 2500, 좌우 2 % 안, + duty에 앞으로 (손 회전만으로는 엔코더 오배선을 놓침, 세션 16). 틱이 0이면 `motor x 30`을 켜 둔 채 `enc info`를 반복해 A·B 레벨 중 안 바뀌는 상을 찾는다 (세션 17: 3.3 V 미연결, 초록 선). **USB 없이 시험할 때는 부팅 로그 `Boot count`를 전후로 비교** (USB가 VEXT 끊김을 가림. 세션 16 재부팅 원인은 STELA J2 스위치 선). 빌드는 `firmware/scripts/fw build --project projects/policy`
 - sim ↔ real 관측 일치는 `docs/hardware.md` §4 체크리스트로 확인한다
 
 ## 명령

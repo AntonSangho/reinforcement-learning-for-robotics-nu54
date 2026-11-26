@@ -7,6 +7,10 @@
  *   관측 [pitch, pitch_rate, wheel_vel_left, wheel_vel_right]  (시뮬레이션 _get_obs() 와 같은 순서·단위)
  *     pitch        상보필터, alpha 0.99, dt 는 POLICY_DT 로 고정 (학습 env 와 같은 식)
  *     pitch_rate   자이로 Y [rad/s]
+ *     pitch 오프셋 `policy offset <deg>` (기본 0, 리셋하면 0) : 정책에는 pitch - offset 을 넣는다.
+ *                  실물 균형점에서 IMU 가 0 이 아닌 값을 읽는 만큼 (세션 17 손 측정 +6 ~ +12°).
+ *                  상보필터는 offset 에서 시작해 관측이 0 에서 시작하게 하고, 버튼 시작 각도도 offset 기준.
+ *                  넘어짐(POLICY_TIP_RAD)·safety 는 IMU 각도 그대로.
  *     wheel_vel    5 ms 동안의 엔코더 틱 차이 → rad/s
  *   행동 [left, right] → [-1, 1] 로 자른 뒤 x POLICY_CTRL_TO_DUTY_X10 (ctrl 1 = duty 60 %)
  *
@@ -57,6 +61,7 @@
 #define POLICY_ENC_RIGHT          1
 
 #define DEG_TO_RAD                0.017453293f
+#define RAD_TO_DEG                57.29578f
 #define TWO_PI                    6.283185307f
 
 
@@ -109,6 +114,7 @@ static volatile uint8_t       model_sel = 2;
 static volatile vel_mode_t    vel_mode  = VEL_AVG;      // 세션 15 떨림 시험 뒤 기본값 (raw 는 떨림)
 static volatile uint8_t       vel_avg_n = 4;
 static const char * volatile  stop_reason = "-";
+static volatile float         pitch_offset = 0.0f;      // rad, `policy offset <deg>`
 
 static policy_snap_t   snap;
 static policy_stat_t   stat;
@@ -233,6 +239,7 @@ void policyThread(void *arg1, void *arg2, void *arg3)
       hist_r[i] = prev_r;
     }
     hist_cnt = 1;
+    pitch    = pitch_offset;    // 관측 (pitch - offset) 이 0 에서 시작
 
     while (mode != MODE_OFF)
     {
@@ -289,7 +296,7 @@ void policyThread(void *arg1, void *arg2, void *arg3)
       prev_l = enc_l;
       prev_r = enc_r;
 
-      obs[0] = pitch;
+      obs[0] = pitch - pitch_offset;
       obs[1] = pitch_rate;
       if (vel_mode == VEL_AVG)
       {
@@ -424,7 +431,7 @@ void policyBtnThread(void *arg1, void *arg2, void *arg3)
       else
       {
         k_msleep(POLICY_BTN_DELAY_MS);
-        if (fabsf(safetyGetPitch()) < POLICY_BTN_START_DEG)
+        if (fabsf(safetyGetPitch() - pitch_offset * RAD_TO_DEG) < POLICY_BTN_START_DEG)
         {
           safetyReset();
           k_msleep(50);       // safety 가 다시 trip 하는지 한 번 본다
@@ -523,6 +530,7 @@ static void printInfo(void)
             fmtF(b, sizeof(b), stat.step ? (float)stat.infer_us_sum / (float)stat.step : 0.0f, 1),
             (unsigned)stat.infer_us_max);
   cliPrintf("accel pitch %s rad\n", fmtF(b, sizeof(b), s.accel_pitch, 3));
+  cliPrintf("pitch offset %s deg\n", fmtF(b, sizeof(b), pitch_offset * RAD_TO_DEG, 1));
   printSnapHeader();
   printSnap(&s);
 }
@@ -644,6 +652,32 @@ void cliPolicy(cli_args_t *args)
     ret = true;
   }
 
+  // policy offset [deg] : 정책에 넣기 전에 pitch 에서 뺄 값 (실물 균형점의 IMU 각도)
+  if (args->argc >= 1 && args->argc <= 2 && args->isStr(0, "offset") == true)
+  {
+    char b[16];
+
+    if (args->argc == 2)
+    {
+      float deg = args->getFloat(1);
+
+      if (mode != MODE_OFF)
+      {
+        cliPrintf("stop first\n");
+      }
+      else if (deg < -20.0f || deg > 20.0f)
+      {
+        cliPrintf("offset -20 ~ 20 deg\n");
+      }
+      else
+      {
+        pitch_offset = deg * DEG_TO_RAD;
+      }
+    }
+    cliPrintf("pitch offset %s deg\n", fmtF(b, sizeof(b), pitch_offset * RAD_TO_DEG, 1));
+    ret = true;
+  }
+
   if (args->argc == 1 && args->isStr(0, "dry") == true)
   {
     cliPrintf(policyStart(MODE_DRY) ? "policy dry (motor off), phase%d\n" : "already running\n", model_sel);
@@ -727,6 +761,7 @@ void cliPolicy(cli_args_t *args)
     cliPrintf("policy test [repeat]\n");
     cliPrintf("policy sel 1|2\n");
     cliPrintf("policy vel raw|avg [n]|zero\n");
+    cliPrintf("policy offset [deg]\n");
     cliPrintf("policy dry|start|stop\n");
     cliPrintf("policy watch time_ms [interval_ms]\n");
     cliPrintf("policy dump\n");
