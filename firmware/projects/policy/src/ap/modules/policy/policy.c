@@ -12,7 +12,9 @@
  *                  상보필터는 offset 에서 시작해 관측이 0 에서 시작하게 하고, 버튼 시작 각도도 offset 기준.
  *                  넘어짐(POLICY_TIP_RAD)·safety 는 IMU 각도 그대로.
  *     wheel_vel    5 ms 동안의 엔코더 틱 차이 → rad/s
- *   행동 [left, right] → [-1, 1] 로 자른 뒤 x POLICY_CTRL_TO_DUTY_X10 (ctrl 1 = duty 60 %)
+ *   행동 [left, right] → [-1, 1] 로 자른 뒤 x ctrl_to_duty_x10 (기본 ctrl 1 = duty 60 %)
+ *     배율 `policy scale <duty%>` (기본 60, 리셋하면 60) : ctrl 1 일 때의 duty.
+ *     세션 18 바퀴 든 채 duty 30 % 2초: 실물 약 2600틱, 시뮬레이션 2170틱 → 실물 모터가 약 20 % 빠름.
  *
  * 축·부호·좌우 (docs/hardware.md §4, §5-6) — 사용자 실측
  *   pitch = -atan2(ax, az), pitch_rate = +gy  (2026-11-17)
@@ -115,6 +117,7 @@ static volatile vel_mode_t    vel_mode  = VEL_AVG;      // 세션 15 떨림 시�
 static volatile uint8_t       vel_avg_n = 4;
 static const char * volatile  stop_reason = "-";
 static volatile float         pitch_offset = 0.0f;      // rad, `policy offset <deg>`
+static volatile int32_t       ctrl_to_duty_x10 = POLICY_CTRL_TO_DUTY_X10;  // `policy scale <duty%>`
 
 static policy_snap_t   snap;
 static policy_stat_t   stat;
@@ -327,7 +330,7 @@ void policyThread(void *arg1, void *arg2, void *arg3)
 
       for (int i=0; i<POLICY_ACTION_SIZE; i++)
       {
-        duty_x10[i] = (int32_t)lroundf(clampf(action[i], -1.0f, 1.0f) * POLICY_CTRL_TO_DUTY_X10);
+        duty_x10[i] = (int32_t)lroundf(clampf(action[i], -1.0f, 1.0f) * (float)ctrl_to_duty_x10);
       }
 
       // 모터
@@ -531,6 +534,7 @@ static void printInfo(void)
             (unsigned)stat.infer_us_max);
   cliPrintf("accel pitch %s rad\n", fmtF(b, sizeof(b), s.accel_pitch, 3));
   cliPrintf("pitch offset %s deg\n", fmtF(b, sizeof(b), pitch_offset * RAD_TO_DEG, 1));
+  cliPrintf("ctrl scale 1 = duty %d %%\n", (int)(ctrl_to_duty_x10 / 10));
   printSnapHeader();
   printSnap(&s);
 }
@@ -678,6 +682,30 @@ void cliPolicy(cli_args_t *args)
     ret = true;
   }
 
+  // policy scale [duty%] : ctrl 1 일 때의 duty (실물 모터를 시뮬레이션 모터 세기에 맞춤)
+  if (args->argc >= 1 && args->argc <= 2 && args->isStr(0, "scale") == true)
+  {
+    if (args->argc == 2)
+    {
+      int32_t pct = args->getData(1);
+
+      if (mode != MODE_OFF)
+      {
+        cliPrintf("stop first\n");
+      }
+      else if (pct < 10 || pct > 60)
+      {
+        cliPrintf("scale 10 ~ 60 %%\n");
+      }
+      else
+      {
+        ctrl_to_duty_x10 = pct * 10;
+      }
+    }
+    cliPrintf("ctrl scale 1 = duty %d %%\n", (int)(ctrl_to_duty_x10 / 10));
+    ret = true;
+  }
+
   if (args->argc == 1 && args->isStr(0, "dry") == true)
   {
     cliPrintf(policyStart(MODE_DRY) ? "policy dry (motor off), phase%d\n" : "already running\n", model_sel);
@@ -712,6 +740,12 @@ void cliPolicy(cli_args_t *args)
     char     b[8][16];
 
     cliPrintf("log %u (of %u), model phase%d, last stop %s\n", (unsigned)n, (unsigned)log_cnt, model_sel, stop_reason);
+    {
+      char b[16];
+
+      cliPrintf("offset %s deg, scale %d %%, vel %s\n", fmtF(b, sizeof(b), pitch_offset * RAD_TO_DEG, 1),
+                (int)(ctrl_to_duty_x10 / 10), vel_str[vel_mode]);
+    }
     cliPrintf("%8s %8s %8s %6s %6s %6s %6s %6s %6s\n", "ms", "pitch", "rate", "vel_l", "vel_r", "raw_l", "raw_r", "duty_l", "duty_r");
     for (uint32_t i=first; i<log_cnt; i++)
     {
@@ -762,6 +796,7 @@ void cliPolicy(cli_args_t *args)
     cliPrintf("policy sel 1|2\n");
     cliPrintf("policy vel raw|avg [n]|zero\n");
     cliPrintf("policy offset [deg]\n");
+    cliPrintf("policy scale [duty%%]\n");
     cliPrintf("policy dry|start|stop\n");
     cliPrintf("policy watch time_ms [interval_ms]\n");
     cliPrintf("policy dump\n");
